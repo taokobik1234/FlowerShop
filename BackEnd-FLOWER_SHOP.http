@@ -1,0 +1,6 @@
+@BackEnd_FLOWER_SHOP_HostAddress = http://localhost:5291
+
+GET {{BackEnd_FLOWER_SHOP_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
