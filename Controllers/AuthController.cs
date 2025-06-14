@@ -156,6 +156,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
 
         [HttpGet]
         [Authorize] // This route requires a valid JWT token
+        [Authorize(Roles = "User")]
         public IActionResult GetProfile()
         {
             return Ok(new { message = "This is a protected route." });

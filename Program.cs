@@ -57,6 +57,7 @@ builder.Services.AddAuthentication(options =>
 });
 // Register custom services
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 var app = builder.Build(); // Build the application after all services are registered
 
