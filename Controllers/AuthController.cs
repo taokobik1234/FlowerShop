@@ -30,9 +30,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
             _configuration = configuration;
         }
 
-        [HttpPost("Register")]
-        [Route("users")]
-        [Route("auth/register")]
+        [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
         {
@@ -66,9 +64,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
             return Ok("Register successfully");
         }
 
-        [HttpPost("Login")]
-        [Route("users/login")]
-        [Route("auth/login")]
+        [HttpPost("login")]
         public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginDtoRequest loginDto)
         {
             if (!ModelState.IsValid)

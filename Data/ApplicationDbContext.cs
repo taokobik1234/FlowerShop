@@ -23,8 +23,9 @@ namespace BackEnd_FLOWER_SHOP.Data
             public DbSet<CartItem> CartItem { get; set; }
             public DbSet<Category> Categories { get; set; }
             public DbSet<Address> Addresses { get; set; }
-            public DbSet<ImageUpload> FileUploads { get; set; }
+            public DbSet<ImageUpload> ImageUploads { get; set; }
             public DbSet<PricingRule> PricingRules { get; set; }
+            public DbSet<ProductCategory> ProductCategories { get; set; }
             protected override void OnModelCreating(ModelBuilder builder)
             {
                   base.OnModelCreating(builder);
@@ -97,7 +98,7 @@ namespace BackEnd_FLOWER_SHOP.Data
                         .HasMaxLength(200)
                         .IsRequired();
 
-                        entity.Property(p => p.flowerType)
+                        entity.Property(p => p.flowerstatus)
                         .HasConversion<string>()
                         .HasMaxLength(50)
                         .IsRequired();
@@ -130,7 +131,7 @@ namespace BackEnd_FLOWER_SHOP.Data
                         .HasForeignKey(pc => pc.ProductId)
                         .OnDelete(DeleteBehavior.Cascade);
 
-                        entity.HasMany(p => p.ProductImages)
+                        entity.HasMany(p => p.ImageUploads)
                         .WithOne(i => i.Product)
                         .HasForeignKey(i => i.ProductId)
                         .OnDelete(DeleteBehavior.Cascade);
@@ -351,39 +352,23 @@ namespace BackEnd_FLOWER_SHOP.Data
 
                   // ImageUpload Configuration
                   builder.Entity<ImageUpload>(entity =>
-                  {
-                        entity.ToTable("ImageUploads");
+            {
+                  entity.ToTable("ImageUploads");
 
-                        entity.Property(i => i.FilePath)
-                        .HasMaxLength(500)
-                        .IsRequired();
+                  entity.Property(i => i.ImageUrl)
+                      .HasMaxLength(500)
+                      .IsRequired();
 
-                        entity.Property(i => i.FileName)
-                        .HasMaxLength(255)
-                        .IsRequired();
+                  entity.Property(i => i.PublicId)
+                      .HasMaxLength(255)
+                      .IsRequired();
 
-                        entity.Property(i => i.OriginalFileName)
-                        .HasMaxLength(255)
-                        .IsRequired();
-
-                        entity.Property(i => i.FileSize)
-                        .IsRequired();
-
-                        entity.Property(i => i.ImageType)
-                        .HasConversion<string>()
-                        .HasMaxLength(50)
-                        .IsRequired();
-
-                        entity.HasOne(i => i.Product)
-                        .WithMany(p => p.ProductImages)
-                        .HasForeignKey(i => i.ProductId)
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                        entity.HasOne(i => i.User)
-                        .WithMany()
-                        .HasForeignKey(i => i.UserId)
-                        .OnDelete(DeleteBehavior.Cascade);
-                  });
+                  // Configure relationship with Product
+                  entity.HasOne(i => i.Product)
+                      .WithMany(p => p.ImageUploads)
+                      .HasForeignKey(i => i.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
 
                   // ==================== PRICING RULE CONFIGURATION ====================
 

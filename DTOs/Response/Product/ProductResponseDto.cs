@@ -4,32 +4,21 @@ using System.Linq;
 using System.Threading.Tasks;
 using BackEnd_FLOWER_SHOP.Enums;
 
-namespace BackEnd_FLOWER_SHOP.Entities
+namespace BackEnd_FLOWER_SHOP.DTOs.Request.Product
 {
-    public class Product
+    public class ProductResponseDto
     {
-        public Product()
-        {
-            CreatedAt = DateTime.UtcNow;
-            UpdatedAt = DateTime.UtcNow;
-            ImageUploads = new List<ImageUpload>();
-        }
-
         public long Id { get; set; }
         public string Name { get; set; }
-        public FlowerStatus flowerstatus { get; set; }
+        public FlowerStatus FlowerStatus { get; set; }
         public string Description { get; set; }
         public decimal BasePrice { get; set; }
         public string Condition { get; set; }
         public long StockQuantity { get; set; }
         public bool IsActive { get; set; }
-        public ICollection<ProductCategory> ProductCategories { get; set; }
-
-        public virtual ICollection<ImageUpload> ImageUploads { get; set; }
-        public virtual ICollection<PricingRule> PricingRules { get; set; }
-
+        public List<ImageResponseDto> Images { get; set; } = new List<ImageResponseDto>();
+        public List<CategoryResponseDto> Categories { get; set; } = new List<CategoryResponseDto>();
         public DateTime? CreatedAt { get; set; }
-
         public DateTime? UpdatedAt { get; set; }
     }
 }

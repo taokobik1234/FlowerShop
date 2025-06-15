@@ -1,4 +1,5 @@
 using System.Text;
+using BackEnd_FLOWER_SHOP.Configuration;
 using BackEnd_FLOWER_SHOP.Data; // Assuming ApplicationDbContext is here
 using BackEnd_FLOWER_SHOP.Entities; // Assuming ApplicationUser and ApplicationRole are here
 using BackEnd_FLOWER_SHOP.Services;
@@ -58,7 +59,9 @@ builder.Services.AddAuthentication(options =>
 // Register custom services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
-
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 var app = builder.Build(); // Build the application after all services are registered
 
 // Configure the HTTP request pipeline

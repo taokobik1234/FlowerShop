@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 
 namespace BackEnd_FLOWER_SHOP.Enums
 {
-    public enum FlowerType
+    public enum FlowerStatus
     {
-
+        NewFlower,
+        OldFlower,
+        LowStock
     }
 }
