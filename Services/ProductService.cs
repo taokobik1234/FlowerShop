@@ -382,5 +382,12 @@ namespace BackEnd_FLOWER_SHOP.Services
                 };
             }
         }
+
+        public async Task<bool> ExistProductAsync(long id)
+        {
+            return await _context.Products
+                                 .AnyAsync(p => p.Id == id);
+        }
+
     }
 }

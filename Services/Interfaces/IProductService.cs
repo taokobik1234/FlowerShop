@@ -16,6 +16,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
         Task<ProductResponseDto?> GetProductByIdAsync(long id);
         Task<ProductResponseDto> UpdateProductAsync(long id, ProductCreateDto productDto); // New method
         Task<ApiResponse> DeleteProductAsync(long id);
+        Task<bool> ExistProductAsync(long id);
     }
 
 }
