@@ -82,6 +82,10 @@ namespace BackEnd_FLOWER_SHOP.Services
                 {
                     applicableRules.Add(rule);
                 }
+                else
+                {
+                    _logger.LogInformation($"Not apply rule {rule.PricingRuleId}");
+                }
             }
 
             return applicableRules;
@@ -90,13 +94,15 @@ namespace BackEnd_FLOWER_SHOP.Services
         private bool IsRuleApplicable(PricingRule rule, DateTime requestTime)
         {
             // Check date range
+            _logger.LogInformation($"Not apply rule 1 for {rule.PricingRuleId}");
             if (rule.StartDate.HasValue && requestTime.Date < rule.StartDate.Value.Date)
                 return false;
-
+            _logger.LogInformation($"Not apply rule 2 for {rule.PricingRuleId}");
             if (rule.EndDate.HasValue && requestTime.Date > rule.EndDate.Value.Date)
                 return false;
 
             // Check time range
+            _logger.LogInformation($"Not apply rule 3 for {rule.PricingRuleId}");
             if (rule.StartTime.HasValue && rule.EndTime.HasValue)
             {
                 var currentTime = requestTime.TimeOfDay;
@@ -104,13 +110,18 @@ namespace BackEnd_FLOWER_SHOP.Services
                     return false;
             }
 
+            _logger.LogInformation($"Not apply rule 4 for {rule.PricingRuleId}");
             // Check special days
-            if (!string.IsNullOrEmpty(rule.SpecialDay))
+            if (!string.IsNullOrWhiteSpace(rule.SpecialDay))
             {
-                if (!IsSpecialDay(rule.SpecialDay, requestTime))
+                if (!IsSpecialDay(rule.SpecialDay.Trim(), requestTime))
+                {
+                    _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable - not special day");
                     return false;
+                }
             }
 
+            _logger.LogInformation($"Not apply rule 5 for {rule.PricingRuleId}");
             // Check product condition
             if (!string.IsNullOrEmpty(rule.Condition))
             {
@@ -119,7 +130,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 if (!IsConditionMet(rule.Condition, rule.FlowerId.GetValueOrDefault(), requestTime))
                     return false;
             }
-
+            _logger.LogInformation($"Not apply rule 6 for {rule.PricingRuleId}");
             return true;
         }
 
@@ -136,7 +147,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                     return date.Month == 3 && date.Day == 8;
 
                 case "mothers_day":
-                    // Second Sunday in May (US)
                     var mothersDay = GetNthWeekdayOfMonth(date.Year, 5, DayOfWeek.Sunday, 2);
                     return date.Date == mothersDay.Date;
 

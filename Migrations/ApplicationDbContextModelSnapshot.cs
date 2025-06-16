@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "1f538610-0176-4e66-8647-2b937f9826eb",
-                            CreationDate = new DateTime(2025, 6, 15, 16, 4, 49, 238, DateTimeKind.Utc).AddTicks(2534),
-                            ModificationDate = new DateTime(2025, 6, 15, 16, 4, 49, 238, DateTimeKind.Utc).AddTicks(2535),
+                            ConcurrencyStamp = "5170cfb8-5b73-404e-a9a2-fef28449a85a",
+                            CreationDate = new DateTime(2025, 6, 16, 14, 29, 55, 65, DateTimeKind.Utc).AddTicks(5365),
+                            ModificationDate = new DateTime(2025, 6, 16, 14, 29, 55, 65, DateTimeKind.Utc).AddTicks(5365),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "32b03502-3b54-431f-94b7-a30b87e4bad8",
-                            CreationDate = new DateTime(2025, 6, 15, 16, 4, 49, 238, DateTimeKind.Utc).AddTicks(2621),
-                            ModificationDate = new DateTime(2025, 6, 15, 16, 4, 49, 238, DateTimeKind.Utc).AddTicks(2622),
+                            ConcurrencyStamp = "e2411f01-61dc-43a9-bb9c-bce459c29e9c",
+                            CreationDate = new DateTime(2025, 6, 16, 14, 29, 55, 65, DateTimeKind.Utc).AddTicks(5470),
+                            ModificationDate = new DateTime(2025, 6, 16, 14, 29, 55, 65, DateTimeKind.Utc).AddTicks(5470),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -416,7 +416,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("PricingRuleId"));
 
                     b.Property<string>("Condition")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
@@ -447,7 +446,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("SpecialDay")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 

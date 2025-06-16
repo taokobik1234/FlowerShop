@@ -380,9 +380,11 @@ namespace BackEnd_FLOWER_SHOP.Data
                         entity.HasKey(pr => pr.PricingRuleId);
 
                         entity.Property(pr => pr.Condition)
+                        .IsRequired(false)
                         .HasMaxLength(200);
 
                         entity.Property(pr => pr.SpecialDay)
+                        .IsRequired(false)
                         .HasMaxLength(100);
 
                         entity.Property(pr => pr.PriceMultiplier)

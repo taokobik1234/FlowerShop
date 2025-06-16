@@ -9,8 +9,8 @@ namespace BackEnd_FLOWER_SHOP.Entities
     {
         public long PricingRuleId { get; set; }
         public long? FlowerId { get; set; }
-        public string Condition { get; set; }
-        public string SpecialDay { get; set; }
+        public string? Condition { get; set; }
+        public string? SpecialDay { get; set; }
         public TimeSpan? StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
         public DateTime? StartDate { get; set; }
