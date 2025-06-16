@@ -16,7 +16,7 @@ namespace BackEnd_FLOWER_SHOP.Entities
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public long? RoleId { get; set; }
-        public string AvatarUrl { get; set; }
+        public string? AvatarUrl { get; set; }
 
         public virtual ApplicationRole Role { get; set; }
         public ICollection<Address> Addresses { get; set; } = new List<Address>();

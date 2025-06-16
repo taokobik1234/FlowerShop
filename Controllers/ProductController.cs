@@ -97,5 +97,78 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 return StatusCode(500, "An error occurred while retrieving the product");
             }
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateProduct(long id, [FromForm] ProductCreateDto productDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Invalid input data",
+                        Errors = errors
+                    });
+                }
+
+                var result = await _productService.UpdateProductAsync(id, productDto);
+                return Ok(new ApiResponse<ProductResponseDto>
+                {
+                    Success = true,
+                    Message = "Product updated successfully",
+                    Data = result
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, $"Invalid input for updating product with ID: {id}");
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating product with ID: {id}");
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "An error occurred while updating the product",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProduct(long id)
+        {
+            try
+            {
+                var result = await _productService.DeleteProductAsync(id);
+                if (!result.Success)
+                {
+                    return StatusCode(result.Errors.Any() ? 400 : 404, result);
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting product with ID: {id}");
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "An error occurred while deleting the product",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
+        }
     }
 }

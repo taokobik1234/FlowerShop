@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BackEnd_FLOWER_SHOP.Data;
+using BackEnd_FLOWER_SHOP.DTOs.Request;
 using BackEnd_FLOWER_SHOP.DTOs.Request.Product;
 using BackEnd_FLOWER_SHOP.Entities;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
@@ -213,6 +214,172 @@ namespace BackEnd_FLOWER_SHOP.Services
             {
                 _logger.LogError(ex, $"Error retrieving product with ID: {id}");
                 throw;
+            }
+        }
+
+        public async Task<ProductResponseDto> UpdateProductAsync(long id, ProductCreateDto productDto)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var product = await _context.Products
+                    .Include(p => p.ImageUploads)
+                    .Include(p => p.ProductCategories)
+                    .FirstOrDefaultAsync(p => p.Id == id);
+
+                if (product == null)
+                {
+                    throw new ArgumentException($"Product with ID {id} not found");
+                }
+
+                // Validate categories exist
+                var existingCategories = await _context.Categories
+                    .Where(c => productDto.CategoryIds.Contains(c.Id))
+                    .ToListAsync();
+
+                if (existingCategories.Count != productDto.CategoryIds.Count)
+                {
+                    var missingIds = productDto.CategoryIds.Except(existingCategories.Select(c => c.Id));
+                    throw new ArgumentException($"Categories not found: {string.Join(", ", missingIds)}");
+                }
+
+                // Update product properties
+                product.Name = productDto.Name;
+                product.flowerstatus = productDto.FlowerStatus;
+                product.Description = productDto.Description;
+                product.BasePrice = productDto.BasePrice;
+                product.Condition = productDto.Condition;
+                product.StockQuantity = productDto.StockQuantity;
+                product.IsActive = productDto.IsActive;
+                product.UpdatedAt = DateTime.UtcNow;
+
+                // Handle image updates
+                if (productDto.Images?.Any() == true)
+                {
+                    // Delete existing images
+                    foreach (var image in product.ImageUploads.ToList())
+                    {
+                        await _cloudinaryService.DeleteImageAsync(image.PublicId);
+                        _context.ImageUploads.Remove(image);
+                    }
+
+                    // Upload new images
+                    var uploadResults = await _cloudinaryService.UploadMultipleImagesAsync(productDto.Images);
+                    product.ImageUploads = uploadResults.Select(result => new ImageUpload
+                    {
+                        ImageUrl = result.Url,
+                        PublicId = result.PublicId,
+                        ProductId = product.Id
+                    }).ToList();
+
+                    _context.ImageUploads.AddRange(product.ImageUploads);
+                }
+
+                // Update product categories
+                _context.ProductCategories.RemoveRange(product.ProductCategories);
+                product.ProductCategories = existingCategories.Select(category => new ProductCategory
+                {
+                    ProductId = product.Id,
+                    CategoryId = category.Id
+                }).ToList();
+                _context.ProductCategories.AddRange(product.ProductCategories);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation($"Product updated successfully with ID: {product.Id}");
+
+                return new ProductResponseDto
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    FlowerStatus = product.flowerstatus,
+                    Description = product.Description,
+                    BasePrice = product.BasePrice,
+                    Condition = product.Condition,
+                    StockQuantity = product.StockQuantity,
+                    IsActive = product.IsActive,
+                    Images = product.ImageUploads.Select(img => new ImageResponseDto
+                    {
+                        Id = img.Id,
+                        ImageUrl = img.ImageUrl,
+                        PublicId = img.PublicId
+                    }).ToList(),
+                    Categories = existingCategories.Select(cat => new CategoryResponseDto
+                    {
+                        Id = cat.Id,
+                        Name = cat.Name
+                    }).ToList(),
+                    CreatedAt = product.CreatedAt,
+                    UpdatedAt = product.UpdatedAt
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, $"Error updating product with ID: {id}");
+                throw;
+            }
+        }
+
+        public async Task<ApiResponse> DeleteProductAsync(long id)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var product = await _context.Products
+                    .Include(p => p.ImageUploads)
+                    .Include(p => p.ProductCategories) // Added to load ProductCategories
+                    .FirstOrDefaultAsync(p => p.Id == id);
+
+                if (product == null)
+                {
+                    return new ApiResponse
+                    {
+                        Success = false,
+                        Message = $"Product with ID {id} not found",
+                        Errors = new List<string> { "Product not found" }
+                    };
+                }
+
+                // Delete images from Cloudinary
+                if (product.ImageUploads != null && product.ImageUploads.Any())
+                {
+                    foreach (var image in product.ImageUploads.ToList())
+                    {
+                        await _cloudinaryService.DeleteImageAsync(image.PublicId);
+                    }
+                    _context.ImageUploads.RemoveRange(product.ImageUploads);
+                }
+
+                // Delete product categories
+                if (product.ProductCategories != null && product.ProductCategories.Any())
+                {
+                    _context.ProductCategories.RemoveRange(product.ProductCategories);
+                }
+
+                // Delete the product
+                _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                _logger.LogInformation($"Product deleted successfully with ID: {id}");
+                return new ApiResponse
+                {
+                    Success = true,
+                    Message = "Product deleted successfully"
+                };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, $"Error deleting product with ID: {id}");
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = "An error occurred while deleting the product",
+                    Errors = new List<string> { ex.Message }
+                };
             }
         }
     }

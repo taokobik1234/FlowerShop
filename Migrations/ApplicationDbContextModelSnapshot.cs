@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "0556f82e-de66-4156-b857-7b9c4c17933c",
-                            CreationDate = new DateTime(2025, 6, 15, 13, 41, 32, 577, DateTimeKind.Utc).AddTicks(9084),
-                            ModificationDate = new DateTime(2025, 6, 15, 13, 41, 32, 577, DateTimeKind.Utc).AddTicks(9085),
+                            ConcurrencyStamp = "1f538610-0176-4e66-8647-2b937f9826eb",
+                            CreationDate = new DateTime(2025, 6, 15, 16, 4, 49, 238, DateTimeKind.Utc).AddTicks(2534),
+                            ModificationDate = new DateTime(2025, 6, 15, 16, 4, 49, 238, DateTimeKind.Utc).AddTicks(2535),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "29d93834-a99b-4fdc-ae6a-3f22e90c640c",
-                            CreationDate = new DateTime(2025, 6, 15, 13, 41, 32, 577, DateTimeKind.Utc).AddTicks(9232),
-                            ModificationDate = new DateTime(2025, 6, 15, 13, 41, 32, 577, DateTimeKind.Utc).AddTicks(9233),
+                            ConcurrencyStamp = "32b03502-3b54-431f-94b7-a30b87e4bad8",
+                            CreationDate = new DateTime(2025, 6, 15, 16, 4, 49, 238, DateTimeKind.Utc).AddTicks(2621),
+                            ModificationDate = new DateTime(2025, 6, 15, 16, 4, 49, 238, DateTimeKind.Utc).AddTicks(2622),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -138,7 +138,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("AvatarUrl")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ConcurrencyStamp")
