@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BackEnd_FLOWER_SHOP.DTOs.Request;
 using BackEnd_FLOWER_SHOP.DTOs.Request.Product;
+using BackEnd_FLOWER_SHOP.DTOs.Response.Product;
 using BackEnd_FLOWER_SHOP.Entities;
 
 namespace BackEnd_FLOWER_SHOP.Services.Interfaces
@@ -17,6 +18,8 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
         Task<ProductResponseDto> UpdateProductAsync(long id, ProductCreateDto productDto); // New method
         Task<ApiResponse> DeleteProductAsync(long id);
         Task<bool> ExistProductAsync(long id);
+
+        Task<ProductListingResponseDto> GetProductListingsAsync(ProductListingRequestDto request);
     }
 
 }

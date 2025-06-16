@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BackEnd_FLOWER_SHOP.Data;
+using BackEnd_FLOWER_SHOP.DTOs;
 using BackEnd_FLOWER_SHOP.DTOs.Request;
 using BackEnd_FLOWER_SHOP.DTOs.Request.Product;
+using BackEnd_FLOWER_SHOP.DTOs.Response.Product;
 using BackEnd_FLOWER_SHOP.Entities;
+using BackEnd_FLOWER_SHOP.Enums;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -389,5 +392,162 @@ namespace BackEnd_FLOWER_SHOP.Services
                                  .AnyAsync(p => p.Id == id);
         }
 
+        public async Task<ProductListingResponseDto> GetProductListingsAsync(ProductListingRequestDto request)
+        {
+            try
+            {
+                var query = _context.Products
+                    .Include(p => p.ImageUploads)
+                    .Include(p => p.ProductCategories)
+                        .ThenInclude(pc => pc.Category)
+                    .Include(p => p.PricingRules)
+                    .AsQueryable();
+
+                // Apply filters
+                query = ApplyFilters(query, request);
+
+                // Get total count before pagination
+                var totalItems = await query.CountAsync();
+
+                // Apply sorting
+                query = ApplySorting(query, request.SortBy, request.SortDirection);
+
+                // Apply pagination
+                var products = await query
+                    .Skip((request.Page - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .ToListAsync();
+
+                // Map to DTOs
+                var productSummaries = products.Select(p => MapToProductSummaryDto(p)).ToList();
+
+                // Calculate pagination metadata
+                var totalPages = (int)Math.Ceiling((double)totalItems / request.PageSize);
+                var pagination = new PaginationMetadata
+                {
+                    CurrentPage = request.Page,
+                    PageSize = request.PageSize,
+                    TotalItems = totalItems,
+                    TotalPages = totalPages
+                };
+
+
+                return new ProductListingResponseDto
+                {
+                    Products = productSummaries,
+                    Pagination = pagination,
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving product listings");
+                throw;
+            }
+        }
+
+        private IQueryable<Product> ApplyFilters(IQueryable<Product> query, ProductListingRequestDto request)
+        {
+            // Filter by active status
+            if (request.IsActive.HasValue)
+            {
+                query = query.Where(p => p.IsActive == request.IsActive.Value);
+            }
+
+            // Filter by flower types
+            if (request.FlowerTypes?.Any() == true)
+            {
+                query = query.Where(p => request.FlowerTypes.Contains(p.flowerstatus));
+            }
+
+            // Filter by price range
+            if (request.MinPrice.HasValue)
+            {
+                query = query.Where(p => p.BasePrice >= request.MinPrice.Value);
+            }
+            if (request.MaxPrice.HasValue)
+            {
+                query = query.Where(p => p.BasePrice <= request.MaxPrice.Value);
+            }
+
+            // Filter by conditions
+            if (request.Conditions?.Any() == true)
+            {
+                query = query.Where(p => request.Conditions.Contains(p.Condition));
+            }
+
+            // Filter by categories
+            if (request.CategoryIds?.Any() == true)
+            {
+                query = query.Where(p => p.ProductCategories.Any(pc => request.CategoryIds.Contains(pc.CategoryId)));
+            }
+
+            // Filter by occasions (this would need to be implemented based on your category or tag system)
+            if (request.Occasions?.Any() == true)
+            {
+                query = query.Where(p => p.ProductCategories.Any(pc =>
+                    request.Occasions.Contains(pc.Category.Name) ||
+                    request.Occasions.Any(occasion => pc.Category.Name.Contains(occasion))));
+            }
+
+            // Search term filter
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                var searchTerm = request.SearchTerm.ToLower();
+                query = query.Where(p =>
+                    p.Name.ToLower().Contains(searchTerm) ||
+                    p.Description.ToLower().Contains(searchTerm) ||
+                    p.ProductCategories.Any(pc => pc.Category.Name.ToLower().Contains(searchTerm)));
+            }
+
+            return query;
+        }
+
+        private IQueryable<Product> ApplySorting(IQueryable<Product> query, ProductSortBy sortBy, SortDirection direction)
+        {
+            return sortBy switch
+            {
+                ProductSortBy.Name => direction == SortDirection.Ascending
+                    ? query.OrderBy(p => p.Name)
+                    : query.OrderByDescending(p => p.Name),
+
+                ProductSortBy.PriceAscending => query.OrderBy(p => p.BasePrice),
+
+                ProductSortBy.PriceDescending => query.OrderByDescending(p => p.BasePrice),
+
+                ProductSortBy.Newest => query.OrderByDescending(p => p.CreatedAt),
+
+                ProductSortBy.Oldest => query.OrderBy(p => p.CreatedAt),
+
+                ProductSortBy.StockQuantity => direction == SortDirection.Ascending
+                    ? query.OrderBy(p => p.StockQuantity)
+                    : query.OrderByDescending(p => p.StockQuantity),
+
+                _ => query.OrderByDescending(p => p.CreatedAt)
+            };
+        }
+
+        private ProductSummaryDto MapToProductSummaryDto(Product product)
+        {
+            return new ProductSummaryDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                FlowerStatus = product.flowerstatus,
+                Description = product.Description,
+                BasePrice = product.BasePrice,
+                CurrentPrice = product.BasePrice, // You'll need to implement pricing rule logic
+                Condition = product.Condition,
+                StockQuantity = product.StockQuantity,
+                IsActive = product.IsActive,
+                MainImageUrl = product.ImageUploads?.FirstOrDefault()?.ImageUrl,
+                Categories = product.ProductCategories?.Select(pc => new CategoryResponseDto
+                {
+                    Id = pc.Category.Id,
+                    Name = pc.Category.Name
+                }).ToList() ?? new List<CategoryResponseDto>(),
+                CreatedAt = product.CreatedAt,
+                UpdatedAt = product.UpdatedAt
+            };
+        }
     }
 }
