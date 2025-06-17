@@ -12,7 +12,7 @@ namespace BackEnd_FLOWER_SHOP.Entities
         public long ProductId { get; set; }
         public Order Order { get; set; }
         public long OrderId { get; set; }
-        public int Quantity { get; set; }
+        public long Quantity { get; set; }
         public int Price { get; set; }
         public ApplicationUser User { get; set; }
 
