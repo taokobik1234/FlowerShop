@@ -70,47 +70,48 @@ namespace BackEnd_FLOWER_SHOP.Services
 
         public async Task<List<PricingRule>> GetApplicableRulesAsync(long productId, DateTime requestTime)
         {
+            // Get rules that are either global or specifically associated with the product
             var rules = await _context.PricingRules
-                .Where(r => r.FlowerId == productId || r.FlowerId == null) // Product-specific or global rules
+                .Where(r => r.IsGlobal || r.ProductPricingRules.Any(ppr => ppr.ProductId == productId))
                 .ToListAsync();
 
             var applicableRules = new List<PricingRule>();
 
             foreach (var rule in rules)
             {
-                if (IsRuleApplicable(rule, requestTime))
+                if (IsRuleApplicable(rule, productId, requestTime))
                 {
                     applicableRules.Add(rule);
                 }
                 else
                 {
-                    _logger.LogInformation($"Not apply rule {rule.PricingRuleId}");
+                    _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable");
                 }
             }
 
             return applicableRules;
         }
 
-        private bool IsRuleApplicable(PricingRule rule, DateTime requestTime)
+        private bool IsRuleApplicable(PricingRule rule, long productId, DateTime requestTime)
         {
             // Check date range
-            _logger.LogInformation($"Not apply rule 1 for {rule.PricingRuleId}");
+            _logger.LogInformation($"Rule {requestTime.Date} not applicable - not startday");
             if (rule.StartDate.HasValue && requestTime.Date < rule.StartDate.Value.Date)
                 return false;
-            _logger.LogInformation($"Not apply rule 2 for {rule.PricingRuleId}");
+
+            _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable - not end");
             if (rule.EndDate.HasValue && requestTime.Date > rule.EndDate.Value.Date)
                 return false;
 
             // Check time range
-            _logger.LogInformation($"Not apply rule 3 for {rule.PricingRuleId}");
             if (rule.StartTime.HasValue && rule.EndTime.HasValue)
             {
+                _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable - not time");
                 var currentTime = requestTime.TimeOfDay;
                 if (currentTime < rule.StartTime.Value || currentTime > rule.EndTime.Value)
                     return false;
             }
 
-            _logger.LogInformation($"Not apply rule 4 for {rule.PricingRuleId}");
             // Check special days
             if (!string.IsNullOrWhiteSpace(rule.SpecialDay))
             {
@@ -121,16 +122,13 @@ namespace BackEnd_FLOWER_SHOP.Services
                 }
             }
 
-            _logger.LogInformation($"Not apply rule 5 for {rule.PricingRuleId}");
             // Check product condition
             if (!string.IsNullOrEmpty(rule.Condition))
             {
-                // This would need to be implemented based on your business logic
-                // For example, checking product age, stock level, etc.
-                if (!IsConditionMet(rule.Condition, rule.FlowerId.GetValueOrDefault(), requestTime))
+                if (!IsConditionMet(rule.Condition, productId, requestTime))
                     return false;
             }
-            _logger.LogInformation($"Not apply rule 6 for {rule.PricingRuleId}");
+
             return true;
         }
 
@@ -205,13 +203,44 @@ namespace BackEnd_FLOWER_SHOP.Services
             }
         }
 
+        public async Task<PricingRuleResponseDto> GetPricingRuleByIdAsync(long ruleId)
+        {
+            var rule = await _context.PricingRules
+                .Include(r => r.ProductPricingRules)
+                    .ThenInclude(ppr => ppr.Product)
+                .Include(r => r.CreatedByUser)
+                .FirstOrDefaultAsync(r => r.PricingRuleId == ruleId);
+
+            if (rule == null)
+            {
+                throw new ArgumentException($"Pricing rule with ID {ruleId} not found");
+            }
+
+            return MapToResponseDto(rule);
+        }
         public async Task<PricingRuleResponseDto> CreatePricingRuleAsync(PricingRuleCreateDto ruleDto)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                // Validate products if specified
+                if (ruleDto.ProductIds != null && ruleDto.ProductIds.Any())
+                {
+                    var existingProductIds = await _context.Products
+                        .Where(p => ruleDto.ProductIds.Contains(p.Id))
+                        .Select(p => p.Id)
+                        .ToListAsync();
+
+                    var missingProductIds = ruleDto.ProductIds.Except(existingProductIds).ToList();
+                    if (missingProductIds.Any())
+                    {
+                        throw new ArgumentException($"Products with IDs [{string.Join(", ", missingProductIds)}] not found");
+                    }
+                }
+
+                // Create the pricing rule
                 var rule = new PricingRule
                 {
-                    FlowerId = ruleDto.FlowerId,
                     Condition = ruleDto.Condition,
                     SpecialDay = ruleDto.SpecialDay,
                     StartTime = ruleDto.StartTime,
@@ -226,32 +255,69 @@ namespace BackEnd_FLOWER_SHOP.Services
                     FixedPrice = ruleDto.FixedPrice,
                     Priority = ruleDto.Priority,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = ruleDto.CreatedBy
+                    CreatedBy = ruleDto.CreatedBy,
+                    IsGlobal = ruleDto.IsGlobal
                 };
 
                 _context.PricingRules.Add(rule);
                 await _context.SaveChangesAsync();
 
-                return MapToResponseDto(rule);
+                // Create product-pricing rule relationships if specific products are specified
+                if (!ruleDto.IsGlobal && ruleDto.ProductIds != null)
+                {
+                    var productPricingRules = ruleDto.ProductIds.Select(productId => new ProductPricingRule
+                    {
+                        ProductId = productId,
+                        PricingRuleId = rule.PricingRuleId,
+                        CreatedAt = DateTime.UtcNow
+                    }).ToList();
+
+                    _context.ProductPricingRules.AddRange(productPricingRules);
+                    await _context.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+
+                // Return the created rule with associated products
+                return await GetPricingRuleByIdAsync(rule.PricingRuleId);
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error creating pricing rule");
                 throw;
             }
         }
-
         public async Task<PricingRuleResponseDto> UpdatePricingRuleAsync(long ruleId, PricingRuleCreateDto ruleDto)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var rule = await _context.PricingRules.FindAsync(ruleId);
+                var rule = await _context.PricingRules
+                    .Include(r => r.ProductPricingRules)
+                    .FirstOrDefaultAsync(r => r.PricingRuleId == ruleId);
+
                 if (rule == null)
                 {
                     throw new ArgumentException($"Pricing rule with ID {ruleId} not found");
                 }
 
-                rule.FlowerId = ruleDto.FlowerId;
+                // Validate products if specified
+                if (ruleDto.ProductIds != null && ruleDto.ProductIds.Any())
+                {
+                    var existingProductIds = await _context.Products
+                        .Where(p => ruleDto.ProductIds.Contains(p.Id))
+                        .Select(p => p.Id)
+                        .ToListAsync();
+
+                    var missingProductIds = ruleDto.ProductIds.Except(existingProductIds).ToList();
+                    if (missingProductIds.Any())
+                    {
+                        throw new ArgumentException($"Products with IDs [{string.Join(", ", missingProductIds)}] not found");
+                    }
+                }
+
+                // Update rule properties
                 rule.Condition = ruleDto.Condition;
                 rule.SpecialDay = ruleDto.SpecialDay;
                 rule.StartTime = ruleDto.StartTime;
@@ -261,12 +327,32 @@ namespace BackEnd_FLOWER_SHOP.Services
                 rule.PriceMultiplier = ruleDto.PriceMultiplier;
                 rule.FixedPrice = ruleDto.FixedPrice;
                 rule.Priority = ruleDto.Priority;
+                rule.IsGlobal = ruleDto.IsGlobal;
+
+                // Remove existing product associations
+                _context.ProductPricingRules.RemoveRange(rule.ProductPricingRules);
+
+                // Add new product associations if not global
+                if (!ruleDto.IsGlobal && ruleDto.ProductIds != null)
+                {
+                    var newProductPricingRules = ruleDto.ProductIds.Select(productId => new ProductPricingRule
+                    {
+                        ProductId = productId,
+                        PricingRuleId = rule.PricingRuleId,
+                        CreatedAt = DateTime.UtcNow
+                    }).ToList();
+
+                    _context.ProductPricingRules.AddRange(newProductPricingRules);
+                }
 
                 await _context.SaveChangesAsync();
-                return MapToResponseDto(rule);
+                await transaction.CommitAsync();
+
+                return await GetPricingRuleByIdAsync(rule.PricingRuleId);
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, $"Error updating pricing rule {ruleId}");
                 throw;
             }
@@ -274,20 +360,32 @@ namespace BackEnd_FLOWER_SHOP.Services
 
         public async Task<bool> DeletePricingRuleAsync(long ruleId)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var rule = await _context.PricingRules.FindAsync(ruleId);
+                var rule = await _context.PricingRules
+                    .Include(r => r.ProductPricingRules)
+                    .FirstOrDefaultAsync(r => r.PricingRuleId == ruleId);
+
                 if (rule == null)
                 {
                     return false;
                 }
 
+                // Remove product associations first
+                _context.ProductPricingRules.RemoveRange(rule.ProductPricingRules);
+
+                // Remove the rule
                 _context.PricingRules.Remove(rule);
+
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
                 return true;
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, $"Error deleting pricing rule {ruleId}");
                 throw;
             }
@@ -298,8 +396,9 @@ namespace BackEnd_FLOWER_SHOP.Services
             try
             {
                 var rules = await _context.PricingRules
-                    .Where(r => r.FlowerId == productId || r.FlowerId == null)
-                    .Include(r => r.Product)
+                    .Where(r => r.IsGlobal || r.ProductPricingRules.Any(ppr => ppr.ProductId == productId))
+                    .Include(r => r.ProductPricingRules)
+                        .ThenInclude(ppr => ppr.Product)
                     .Include(r => r.CreatedByUser)
                     .ToListAsync();
 
@@ -312,12 +411,32 @@ namespace BackEnd_FLOWER_SHOP.Services
             }
         }
 
+
+        public async Task<List<PricingRuleResponseDto>> GetAllPricingRulesAsync()
+        {
+            try
+            {
+                var rules = await _context.PricingRules
+                    .Include(r => r.ProductPricingRules)
+                        .ThenInclude(ppr => ppr.Product)
+                    .Include(r => r.CreatedByUser)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .ToListAsync();
+
+                return rules.Select(MapToResponseDto).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all pricing rules");
+                throw;
+            }
+        }
+
         private PricingRuleResponseDto MapToResponseDto(PricingRule rule)
         {
             return new PricingRuleResponseDto
             {
                 PricingRuleId = rule.PricingRuleId,
-                FlowerId = rule.FlowerId,
                 Condition = rule.Condition,
                 SpecialDay = rule.SpecialDay,
                 StartTime = rule.StartTime,
@@ -329,8 +448,9 @@ namespace BackEnd_FLOWER_SHOP.Services
                 Priority = rule.Priority,
                 CreatedAt = rule.CreatedAt,
                 CreatedBy = rule.CreatedBy,
-                ProductName = rule.Product?.Name,
-                CreatedByUserName = rule.CreatedByUser?.UserName
+                IsGlobal = rule.IsGlobal,
+                CreatedByUserName = rule.CreatedByUser?.UserName,
+
             };
         }
     }

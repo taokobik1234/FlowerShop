@@ -95,16 +95,21 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                         Errors = errors
                     });
                 }
-                if (ruleDto.FlowerId != null)
+
+                // Validate products exist if specific product IDs are provided
+                if (ruleDto.ProductIds != null && ruleDto.ProductIds.Any())
                 {
-                    var existProduct = await _productService.ExistProductAsync(ruleDto.FlowerId);
-                    if (!existProduct)
+                    foreach (var productId in ruleDto.ProductIds)
                     {
-                        return NotFound(new ApiResponse
+                        var existProduct = await _productService.ExistProductAsync(productId);
+                        if (!existProduct)
                         {
-                            Success = false,
-                            Message = $"Product with ID {ruleDto.FlowerId} not found"
-                        });
+                            return NotFound(new ApiResponse
+                            {
+                                Success = false,
+                                Message = $"Product with ID {productId} not found"
+                            });
+                        }
                     }
                 }
 
@@ -133,22 +138,19 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         {
             try
             {
-                var rules = await _pricingService.GetPricingRulesForProductAsync(id);
-                var rule = rules.FirstOrDefault(r => r.PricingRuleId == id);
-
-                if (rule == null)
-                {
-                    return NotFound(new ApiResponse
-                    {
-                        Success = false,
-                        Message = $"Pricing rule with ID {id} not found"
-                    });
-                }
-
+                var rule = await _pricingService.GetPricingRuleByIdAsync(id);
                 return Ok(new ApiResponse<PricingRuleResponseDto>
                 {
                     Success = true,
                     Data = rule
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new ApiResponse
+                {
+                    Success = false,
+                    Message = ex.Message
                 });
             }
             catch (Exception ex)
@@ -158,6 +160,30 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 {
                     Success = false,
                     Message = "An error occurred while retrieving the pricing rule"
+                });
+            }
+        }
+
+        [HttpGet("rules")]
+        public async Task<IActionResult> GetAllPricingRules()
+        {
+            try
+            {
+                var rules = await _pricingService.GetAllPricingRulesAsync();
+                return Ok(new ApiResponse<List<PricingRuleResponseDto>>
+                {
+                    Success = true,
+                    Data = rules,
+                    Message = $"Retrieved {rules.Count} pricing rules"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving all pricing rules");
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "An error occurred while retrieving pricing rules"
                 });
             }
         }
@@ -172,7 +198,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 {
                     Success = true,
                     Data = rules,
-                    Message = $"Retrieved {rules.Count} pricing rules"
+                    Message = $"Retrieved {rules.Count} pricing rules for product {productId}"
                 });
             }
             catch (Exception ex)
@@ -203,6 +229,23 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                         Message = "Invalid input data",
                         Errors = errors
                     });
+                }
+
+                // Validate products exist if specific product IDs are provided
+                if (ruleDto.ProductIds != null && ruleDto.ProductIds.Any())
+                {
+                    foreach (var productId in ruleDto.ProductIds)
+                    {
+                        var existProduct = await _productService.ExistProductAsync(productId);
+                        if (!existProduct)
+                        {
+                            return NotFound(new ApiResponse
+                            {
+                                Success = false,
+                                Message = $"Product with ID {productId} not found"
+                            });
+                        }
+                    }
                 }
 
                 var result = await _pricingService.UpdatePricingRuleAsync(id, ruleDto);
@@ -265,9 +308,9 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         // [HttpGet("test/special-days")]
-        // public IActionResult GetSpecialDays()
+        // public IActionResult GetSpecialDaysReference()
         // {
-        //     var specialDays = new
+        //     var reference = new
         //     {
         //         SupportedSpecialDays = new[]
         //         {
@@ -279,18 +322,35 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         //         },
         //         Examples = new[]
         //         {
-        //             new { Rule = "Valentine's Day Premium", SpecialDay = "valentine", PriceMultiplier = 1.5m },
-        //             new { Rule = "Weekend Discount", SpecialDay = "weekend", PriceMultiplier = 0.9m },
-        //             new { Rule = "New Product Premium", Condition = "new", PriceMultiplier = 1.2m },
-        //             new { Rule = "Old Stock Clearance", Condition = "old", PriceMultiplier = 0.7m }
+        //             new { 
+        //                 Rule = "Valentine's Day Premium (Global)", 
+        //                 SpecialDay = "valentine", 
+        //                 PriceMultiplier = 1.5m,
+        //                 ProductIds = (List<long>?)null,
+        //                 Description = "Applies to all products"
+        //             },
+        //             new { 
+        //                 Rule = "Weekend Discount (Specific Products)", 
+        //                 SpecialDay = "weekend", 
+        //                 PriceMultiplier = 0.9m,
+        //                 ProductIds = new List<long> { 1, 2, 3 },
+        //                 Description = "Applies only to products 1, 2, and 3"
+        //             },
+        //             new { 
+        //                 Rule = "New Product Premium", 
+        //                 Condition = "new", 
+        //                 PriceMultiplier = 1.2m,
+        //                 ProductIds = (List<long>?)null,
+        //                 Description = "Global rule for new products"
+        //             }
         //         }
         //     };
 
         //     return Ok(new ApiResponse<object>
         //     {
         //         Success = true,
-        //         Data = specialDays,
-        //         Message = "Special days and conditions reference"
+        //         Data = reference,
+        //         Message = "Special days and conditions reference with N:N relationship examples"
         //     });
         // }
     }

@@ -25,6 +25,7 @@ namespace BackEnd_FLOWER_SHOP.Data
             public DbSet<Address> Addresses { get; set; }
             public DbSet<ImageUpload> ImageUploads { get; set; }
             public DbSet<PricingRule> PricingRules { get; set; }
+            public DbSet<ProductPricingRule> ProductPricingRules { get; set; }
             public DbSet<ProductCategory> ProductCategories { get; set; }
             protected override void OnModelCreating(ModelBuilder builder)
             {
@@ -136,9 +137,9 @@ namespace BackEnd_FLOWER_SHOP.Data
                         .HasForeignKey(i => i.ProductId)
                         .OnDelete(DeleteBehavior.Cascade);
 
-                        entity.HasMany(p => p.PricingRules)
+                        entity.HasMany(p => p.ProductPricingRules)
                         .WithOne(pr => pr.Product)
-                        .HasForeignKey(pr => pr.FlowerId)
+                        .HasForeignKey(pr => pr.ProductId)
                         .OnDelete(DeleteBehavior.Cascade);
                   });
 
@@ -371,7 +372,20 @@ namespace BackEnd_FLOWER_SHOP.Data
             });
 
                   // ==================== PRICING RULE CONFIGURATION ====================
+                  builder.Entity<ProductPricingRule>()
+        .HasKey(ppr => new { ppr.ProductId, ppr.PricingRuleId });
 
+                  builder.Entity<ProductPricingRule>()
+                      .HasOne(ppr => ppr.Product)
+                      .WithMany(p => p.ProductPricingRules)
+                      .HasForeignKey(ppr => ppr.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                  builder.Entity<ProductPricingRule>()
+                      .HasOne(ppr => ppr.PricingRule)
+                      .WithMany(pr => pr.ProductPricingRules)
+                      .HasForeignKey(ppr => ppr.PricingRuleId)
+                      .OnDelete(DeleteBehavior.Cascade);
                   // PricingRule Configuration
                   builder.Entity<PricingRule>(entity =>
                   {
@@ -400,42 +414,42 @@ namespace BackEnd_FLOWER_SHOP.Data
                         entity.Property(pr => pr.CreatedAt)
                         .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
-                        entity.HasOne(pr => pr.Product)
-                        .WithMany(p => p.PricingRules)
-                        .HasForeignKey(pr => pr.FlowerId)
-                        .OnDelete(DeleteBehavior.Cascade);
 
                         entity.HasOne(pr => pr.CreatedByUser)
                         .WithMany()
                         .HasForeignKey(pr => pr.CreatedBy)
                         .OnDelete(DeleteBehavior.Restrict);
 
-                        // Create index for performance
-                        entity.HasIndex(pr => new { pr.FlowerId, pr.Priority });
+
                   });
 
+                  builder.Entity<ProductPricingRule>(entity =>
+                        {
+                              entity.Property(e => e.CreatedAt)
+                                    .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+                        });
                   // ==================== SEED DATA ====================
 
                   // Seed Roles
                   var roles = new List<ApplicationRole>
-    {
-        new ApplicationRole("Admin")
-        {
-            Id = 1,
-            NormalizedName = "ADMIN",
-            CreationDate = DateTime.UtcNow,
-            ModificationDate = DateTime.UtcNow,
-            ConcurrencyStamp = Guid.NewGuid().ToString()
-        },
-        new ApplicationRole("User")
-        {
-            Id = 2,
-            NormalizedName = "USER",
-            CreationDate = DateTime.UtcNow,
-            ModificationDate = DateTime.UtcNow,
-            ConcurrencyStamp = Guid.NewGuid().ToString()
-        }
-    };
+                        {
+                              new ApplicationRole("Admin")
+                              {
+                                    Id = 1,
+                                    NormalizedName = "ADMIN",
+                                    CreationDate = DateTime.UtcNow,
+                                    ModificationDate = DateTime.UtcNow,
+                                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                              },
+                              new ApplicationRole("User")
+                              {
+                                    Id = 2,
+                                    NormalizedName = "USER",
+                                    CreationDate = DateTime.UtcNow,
+                                    ModificationDate = DateTime.UtcNow,
+                                    ConcurrencyStamp = Guid.NewGuid().ToString()
+                              }
+                        };
 
                   builder.Entity<ApplicationRole>().HasData(roles);
             }

@@ -21,6 +21,7 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.PricingRule
         public int Priority { get; set; }
         public DateTime CreatedAt { get; set; }
         public long CreatedBy { get; set; }
+        public bool IsGlobal { get; set; }
         public string? CreatedByUserName { get; set; }
     }
 }

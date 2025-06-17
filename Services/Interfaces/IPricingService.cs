@@ -15,6 +15,8 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
         Task<PricingRuleResponseDto> UpdatePricingRuleAsync(long ruleId, PricingRuleCreateDto ruleDto);
         Task<bool> DeletePricingRuleAsync(long ruleId);
         Task<List<PricingRuleResponseDto>> GetPricingRulesForProductAsync(long productId);
+        Task<List<PricingRuleResponseDto>> GetAllPricingRulesAsync();
+        Task<PricingRuleResponseDto> GetPricingRuleByIdAsync(long ruleId);
         Task<List<PricingRule>> GetApplicableRulesAsync(long productId, DateTime requestTime);
     }
 }

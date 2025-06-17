@@ -13,6 +13,7 @@ namespace BackEnd_FLOWER_SHOP.Entities
             CreatedAt = DateTime.UtcNow;
             UpdatedAt = DateTime.UtcNow;
             ImageUploads = new List<ImageUpload>();
+            ProductPricingRules = new List<ProductPricingRule>();
         }
 
         public long Id { get; set; }
@@ -26,10 +27,11 @@ namespace BackEnd_FLOWER_SHOP.Entities
         public ICollection<ProductCategory> ProductCategories { get; set; }
 
         public virtual ICollection<ImageUpload> ImageUploads { get; set; }
-        public virtual ICollection<PricingRule> PricingRules { get; set; }
+
+        // Many-to-many relationship with PricingRule
+        public virtual ICollection<ProductPricingRule> ProductPricingRules { get; set; }
 
         public DateTime? CreatedAt { get; set; }
-
         public DateTime? UpdatedAt { get; set; }
     }
 }

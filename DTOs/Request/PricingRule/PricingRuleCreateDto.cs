@@ -8,8 +8,6 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Request.PricingRule
 {
     public class PricingRuleCreateDto
     {
-        public long FlowerId { get; set; } // null for global rules
-
         [StringLength(100)]
         public string? Condition { get; set; } // "new", "old", "low_stock", etc.
 
@@ -21,16 +19,24 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Request.PricingRule
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
 
-        [Range(0.1, 10.0)]
-        public decimal PriceMultiplier { get; set; } = 1.0m;
+        [Required]
+        [Range(0.01, 100.0, ErrorMessage = "Price multiplier must be between 0.01 and 100")]
+        public decimal PriceMultiplier { get; set; }
 
-        [Range(0.01, double.MaxValue)]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Fixed price must be greater than 0")]
         public decimal? FixedPrice { get; set; }
 
-        [Range(1, 100)]
-        public int Priority { get; set; } = 1;
+        [Required]
+        [Range(1, 1000, ErrorMessage = "Priority must be between 1 and 1000")]
+        public int Priority { get; set; }
 
         [Required]
         public long CreatedBy { get; set; }
+
+        // List of product IDs - if null or empty, the rule is global
+        public List<long>? ProductIds { get; set; }
+
+        // Helper property to determine if this is a global rule
+        public bool IsGlobal => ProductIds == null || !ProductIds.Any();
     }
 }

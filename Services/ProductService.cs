@@ -400,7 +400,8 @@ namespace BackEnd_FLOWER_SHOP.Services
                     .Include(p => p.ImageUploads)
                     .Include(p => p.ProductCategories)
                         .ThenInclude(pc => pc.Category)
-                    .Include(p => p.PricingRules)
+                    .Include(p => p.ProductPricingRules)
+                        .ThenInclude(ppr => ppr.PricingRule)
                     .AsQueryable();
 
                 // Apply filters
