@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "5170cfb8-5b73-404e-a9a2-fef28449a85a",
-                            CreationDate = new DateTime(2025, 6, 16, 14, 29, 55, 65, DateTimeKind.Utc).AddTicks(5365),
-                            ModificationDate = new DateTime(2025, 6, 16, 14, 29, 55, 65, DateTimeKind.Utc).AddTicks(5365),
+                            ConcurrencyStamp = "d4a71310-ce59-4058-ab0d-0d79e7b2268d",
+                            CreationDate = new DateTime(2025, 6, 17, 13, 4, 34, 541, DateTimeKind.Utc).AddTicks(2970),
+                            ModificationDate = new DateTime(2025, 6, 17, 13, 4, 34, 541, DateTimeKind.Utc).AddTicks(2970),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "e2411f01-61dc-43a9-bb9c-bce459c29e9c",
-                            CreationDate = new DateTime(2025, 6, 16, 14, 29, 55, 65, DateTimeKind.Utc).AddTicks(5470),
-                            ModificationDate = new DateTime(2025, 6, 16, 14, 29, 55, 65, DateTimeKind.Utc).AddTicks(5470),
+                            ConcurrencyStamp = "144d0c73-75ee-4266-9894-44af1cf53110",
+                            CreationDate = new DateTime(2025, 6, 17, 13, 4, 34, 541, DateTimeKind.Utc).AddTicks(3045),
+                            ModificationDate = new DateTime(2025, 6, 17, 13, 4, 34, 541, DateTimeKind.Utc).AddTicks(3045),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -436,8 +436,8 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.Property<decimal?>("FixedPrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<long?>("FlowerId")
-                        .HasColumnType("bigint");
+                    b.Property<bool>("IsGlobal")
+                        .HasColumnType("boolean");
 
                     b.Property<decimal>("PriceMultiplier")
                         .HasColumnType("decimal(18,4)");
@@ -458,8 +458,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.HasKey("PricingRuleId");
 
                     b.HasIndex("CreatedBy");
-
-                    b.HasIndex("FlowerId", "Priority");
 
                     b.ToTable("PricingRules", (string)null);
                 });
@@ -531,6 +529,26 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("ProductCategories", (string)null);
+                });
+
+            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.ProductPricingRule", b =>
+                {
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PricingRuleId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+                    b.HasKey("ProductId", "PricingRuleId");
+
+                    b.HasIndex("PricingRuleId");
+
+                    b.ToTable("ProductPricingRules");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -748,14 +766,7 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("BackEnd_FLOWER_SHOP.Entities.Product", "Product")
-                        .WithMany("PricingRules")
-                        .HasForeignKey("FlowerId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.Navigation("CreatedByUser");
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.ProductCategory", b =>
@@ -773,6 +784,25 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.ProductPricingRule", b =>
+                {
+                    b.HasOne("BackEnd_FLOWER_SHOP.Entities.PricingRule", "PricingRule")
+                        .WithMany("ProductPricingRules")
+                        .HasForeignKey("PricingRuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackEnd_FLOWER_SHOP.Entities.Product", "Product")
+                        .WithMany("ProductPricingRules")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PricingRule");
 
                     b.Navigation("Product");
                 });
@@ -850,13 +880,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.Navigation("OrderItems");
                 });
 
+            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.PricingRule", b =>
+                {
+                    b.Navigation("ProductPricingRules");
+                });
+
             modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.Product", b =>
                 {
                     b.Navigation("ImageUploads");
 
-                    b.Navigation("PricingRules");
-
                     b.Navigation("ProductCategories");
+
+                    b.Navigation("ProductPricingRules");
                 });
 #pragma warning restore 612, 618
         }

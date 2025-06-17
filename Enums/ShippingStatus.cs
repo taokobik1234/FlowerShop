@@ -7,6 +7,10 @@ namespace BackEnd_FLOWER_SHOP.Enums
 {
     public enum ShippingStatus
     {
-        Ordered, Processed, Shipped
+        Pending,
+        Processing,
+        Shipped,
+        Delivered,
+        Cancelled
     }
 }
