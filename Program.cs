@@ -15,26 +15,31 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
 
-// Configure Swagger with JWT Authentication
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Flower Shop API",
-        Version = "v1"
+        Version = "v1",
+        Description = "Flower Shop API with JWT Authentication. Click 'Authorize' button and enter your JWT token."
     });
 
-    // Add JWT Authentication to Swagger
+    // Enhanced JWT Bearer configuration for Swagger with better UX
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Name = "Authorization",
+        Description = @"JWT Authorization header using the Bearer scheme. 
+                      Enter your token in the text input below.
+                      Example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+                      No need to add 'Bearer ' prefix - it will be added automatically."
     });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    // Apply JWT authentication globally to all endpoints
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
@@ -51,6 +56,7 @@ builder.Services.AddSwaggerGen(c =>
             new List<string>()
         }
     });
+
 });
 
 builder.Services.AddControllers(); // Moved before builder.Build()
@@ -95,12 +101,13 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
     };
 });
-
+builder.Services.AddHttpContextAccessor();
 // Register custom services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IPricingService, PricingService>();
+builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 

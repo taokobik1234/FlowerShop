@@ -42,7 +42,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 return BadRequest("Email already exist");
             }
             var existingUserByUserName = await _userService.GetByUserName(registerDto.UserName);
-            if (existingUserByEmail != null)
+            if (existingUserByUserName != null)
             {
                 return BadRequest("UserName already exist");
             }

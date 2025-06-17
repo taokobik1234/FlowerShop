@@ -39,6 +39,5 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Request.User
         public string PhoneNumber { get; set; }
 
         // Optional: Role assignment (defaults to "User" if not specified)
-        public string Role { get; set; } = "User";
     }
 }

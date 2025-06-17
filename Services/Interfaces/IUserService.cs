@@ -9,6 +9,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
 {
     public interface IUserService
     {
+        string GetCurrentUserId();
         Task<ApplicationUser> GetByIdAsync(long id);
         Task<ApplicationUser> GetByEmail(string email);
         Task<ApplicationUser> GetByUserName(string username);
