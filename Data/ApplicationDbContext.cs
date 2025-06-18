@@ -27,6 +27,7 @@ namespace BackEnd_FLOWER_SHOP.Data
             public DbSet<PricingRule> PricingRules { get; set; }
             public DbSet<ProductPricingRule> ProductPricingRules { get; set; }
             public DbSet<ProductCategory> ProductCategories { get; set; }
+            public DbSet<Payment> Payments { get; set; }
             protected override void OnModelCreating(ModelBuilder builder)
             {
                   base.OnModelCreating(builder);
