@@ -61,7 +61,15 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddControllers(); // Moved before builder.Build()
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 // Configure DbContext with PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -111,7 +119,9 @@ builder.Services.AddScoped<IPricingService, PricingService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-builder.Services.AddScoped<IOrderService, OrderService>(); 
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IVnpay, Vnpay>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 
 var app = builder.Build(); // Build the application after all services are registered
@@ -127,7 +137,7 @@ if (app.Environment.IsDevelopment())
         c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
     });
 }
-
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseAuthentication(); // Required for Identity
 app.UseAuthorization(); // Required for Identity

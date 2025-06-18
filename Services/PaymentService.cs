@@ -43,10 +43,11 @@ namespace BackEnd_FLOWER_SHOP.Services
                 Method = request.Method,
                 Status = PaymentStatus.Pending,
                 Amount = request.Amount,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow,
+                PaymentDetails = "Text0",
+                UpdatedAt = DateTime.UtcNow
             };
-
+            payment.PaymentDetails = JsonConvert.SerializeObject(payment.PaymentDetails);
             // Handle different payment methods
             switch (request.Method)
             {
@@ -55,7 +56,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                     payment.Status = PaymentStatus.Pending;
                     break;
 
-                case PaymentMethod.VNPAY:
+                case PaymentMethod.VNPay:
                     // For VNPAY, we'll create a payment URL
                     // The actual status will be updated via callback
                     payment.Status = PaymentStatus.Pending;
@@ -70,7 +71,7 @@ namespace BackEnd_FLOWER_SHOP.Services
 
             // Generate payment URL if needed (for VNPAY)
             string paymentUrl = null;
-            if (request.Method == PaymentMethod.VNPAY)
+            if (request.Method == PaymentMethod.VNPay)
             {
                 var vnpayRequest = new PaymentRequest
                 {
@@ -109,7 +110,7 @@ namespace BackEnd_FLOWER_SHOP.Services
             if (payment == null)
                 throw new ArgumentException("Payment not found");
 
-            if (payment.Method != PaymentMethod.VNPAY)
+            if (payment.Method != PaymentMethod.VNPay)
                 throw new InvalidOperationException("Payment method mismatch");
 
             if (paymentResult.IsSuccess)
@@ -124,7 +125,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 payment.PaymentDetails = JsonConvert.SerializeObject(paymentResult);
             }
 
-            payment.UpdatedAt = DateTime.Now;
+            payment.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             return new PaymentResponse
@@ -170,7 +171,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 throw new ArgumentException("COD Payment not found");
 
             payment.Status = status;
-            payment.UpdatedAt = DateTime.Now;
+            payment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 

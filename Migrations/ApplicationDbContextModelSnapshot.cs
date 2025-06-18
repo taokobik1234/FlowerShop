@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "9bbd89a9-b156-4195-afca-986419d6ec01",
-                            CreationDate = new DateTime(2025, 6, 18, 12, 18, 19, 850, DateTimeKind.Utc).AddTicks(592),
-                            ModificationDate = new DateTime(2025, 6, 18, 12, 18, 19, 850, DateTimeKind.Utc).AddTicks(592),
+                            ConcurrencyStamp = "145d461d-29cd-43fc-9082-2526a3e1c970",
+                            CreationDate = new DateTime(2025, 6, 18, 14, 49, 56, 248, DateTimeKind.Utc).AddTicks(1814),
+                            ModificationDate = new DateTime(2025, 6, 18, 14, 49, 56, 248, DateTimeKind.Utc).AddTicks(1814),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "28becb66-e2d0-4658-b318-9948fec23f8d",
-                            CreationDate = new DateTime(2025, 6, 18, 12, 18, 19, 850, DateTimeKind.Utc).AddTicks(648),
-                            ModificationDate = new DateTime(2025, 6, 18, 12, 18, 19, 850, DateTimeKind.Utc).AddTicks(648),
+                            ConcurrencyStamp = "2d6177fc-69ba-4e62-9132-919879e92f90",
+                            CreationDate = new DateTime(2025, 6, 18, 14, 49, 56, 248, DateTimeKind.Utc).AddTicks(1883),
+                            ModificationDate = new DateTime(2025, 6, 18, 14, 49, 56, 248, DateTimeKind.Utc).AddTicks(1884),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -410,6 +410,58 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("OrderItems", (string)null);
+                });
+
+            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.Payment", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<long>("OrderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PaymentDetails")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<long>("TransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("TransactionId")
+                        .IsUnique();
+
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.PricingRule", b =>
@@ -763,6 +815,17 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.Payment", b =>
+                {
+                    b.HasOne("BackEnd_FLOWER_SHOP.Entities.Order", "Order")
+                        .WithOne("Payment")
+                        .HasForeignKey("BackEnd_FLOWER_SHOP.Entities.Payment", "OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.PricingRule", b =>
                 {
                     b.HasOne("BackEnd_FLOWER_SHOP.Entities.ApplicationUser", "CreatedByUser")
@@ -883,6 +946,9 @@ namespace BackEnd_FLOWER_SHOP.Migrations
             modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.Order", b =>
                 {
                     b.Navigation("OrderItems");
+
+                    b.Navigation("Payment")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.PricingRule", b =>

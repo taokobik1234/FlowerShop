@@ -13,29 +13,27 @@ namespace BackEnd_FLOWER_SHOP.Services
 {
     public class Vnpay : IVnpay
     {
-        private string _tmnCode;
-        private string _hashSecret;
-        private string _callbackUrl;
-        private string _baseUrl;
-        private string _version;
-        private string _orderType;
-
-        public void Initialize(string tmnCode,
-            string hashSecret,
-            string baseUrl,
-            string callbackUrl,
-            string version = "2.1.0",
-            string orderType = "other")
+        private readonly string _tmnCode;
+        private readonly string _hashSecret;
+        private readonly string _callbackUrl;
+        private readonly string _baseUrl;
+        private readonly string _version;
+        private readonly string _orderType;
+        private readonly IConfiguration _configuration;
+        public Vnpay(IConfiguration configuration)
         {
-            _tmnCode = tmnCode;
-            _hashSecret = hashSecret;
-            _callbackUrl = callbackUrl;
-            _baseUrl = baseUrl;
-            _version = version;
-            _orderType = orderType;
+            _configuration = configuration;
+            _tmnCode = _configuration["Vnpay:TmnCode"];
+            _hashSecret = _configuration["Vnpay:HashSecret"];
+            _baseUrl = _configuration["Vnpay:BaseUrl"];
+            _callbackUrl = _configuration["Vnpay:CallbackUrl"];
+            _version = "2.1.0";
+            _orderType = "other";
 
             EnsureParametersBeforePayment();
         }
+
+
 
         public string GetPaymentUrl(PaymentRequest request)
         {
@@ -151,6 +149,11 @@ namespace BackEnd_FLOWER_SHOP.Services
             {
                 throw new ArgumentException("Không tìm thấy BaseUrl, TmnCode, HashSecret, hoặc CallbackUrl");
             }
+        }
+
+        public void Initialize(string tmnCode, string hashSecret, string baseUrl, string callbackUrl, string version = "2.1.0", string orderType = "other")
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -244,46 +244,92 @@ namespace BackEnd_FLOWER_SHOP.Data
 
                   // Order Configuration
                   builder.Entity<Order>(entity =>
+    {
+          entity.ToTable("Orders");
+
+          // Properties
+          entity.Property(o => o.TrackingNumber)
+              .HasMaxLength(100);
+
+          entity.Property(o => o.OrderStatus)
+              .HasConversion<string>()
+              .HasMaxLength(50)
+              .IsRequired();
+
+          entity.Property(o => o.CreatedAt)
+              .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+          entity.Property(o => o.UpdatedAt)
+              .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+          entity.Property(o => o.PaymentMethod)
+              .HasConversion<string>()
+              .HasMaxLength(50)
+              .IsRequired();
+
+          // Relationships
+          entity.HasOne(o => o.User)
+              .WithMany(u => u.Orders)
+              .HasForeignKey(o => o.UserId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+          entity.HasOne(o => o.Address)
+              .WithMany()
+              .HasForeignKey(o => o.AddressId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+          entity.HasMany(o => o.OrderItems)
+              .WithOne(oi => oi.Order)
+              .HasForeignKey(oi => oi.OrderId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+          entity.HasOne(o => o.Payment)
+              .WithOne(p => p.Order)
+              .HasForeignKey<Payment>(p => p.OrderId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+          // Indexes
+          entity.HasIndex(o => o.TrackingNumber)
+              .IsUnique();
+    });
+
+                  // Payment configuration
+                  builder.Entity<Payment>(entity =>
                   {
-                        entity.ToTable("Orders");
+                        entity.ToTable("Payments");
 
-                        entity.Property(o => o.TrackingNumber)
-                        .HasMaxLength(100);
+                        // Properties
+                        entity.Property(p => p.Method)
+              .HasConversion<string>()
+              .HasMaxLength(50)
+              .IsRequired();
 
-                        entity.Property(o => o.OrderStatus)
-                        .HasConversion<string>()
-                        .HasMaxLength(50)
-                        .IsRequired();
+                        entity.Property(p => p.Status)
+              .HasConversion<string>()
+              .HasMaxLength(50)
+              .IsRequired();
 
-                        entity.Property(o => o.CreatedAt)
-                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+                        entity.Property(p => p.Amount)
+              .HasColumnType("decimal(18,2)");
 
-                        entity.Property(o => o.UpdatedAt)
-                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+                        entity.Property(p => p.CreatedAt)
+              .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
-                        // Configure relationships
-                        entity.HasOne(o => o.User)
-                        .WithMany(u => u.Orders)
-                        .HasForeignKey(o => o.UserId)
-                        .OnDelete(DeleteBehavior.Restrict);
+                        entity.Property(p => p.UpdatedAt)
+              .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
-                        entity.HasOne(o => o.Address)
-                        .WithMany()
-                        .HasForeignKey(o => o.AddressId)
-                        .OnDelete(DeleteBehavior.Restrict);
+                        entity.Property(p => p.PaymentDetails)
+              .HasColumnType("jsonb"); // For PostgreSQL, use "nvarchar(max)" for SQL Server
 
-                        entity.HasMany(o => o.OrderItems)
-                        .WithOne(oi => oi.Order)
-                        .HasForeignKey(oi => oi.OrderId)
-                        .OnDelete(DeleteBehavior.Cascade);
-                        
-                        entity.Property(o => o.PaymentMethod)
-                        .HasConversion<string>() // Store enum as string
-                        .HasMaxLength(50)
-                        .IsRequired();
-                        // Create index on tracking number
-                        entity.HasIndex(o => o.TrackingNumber)
-                        .IsUnique();
+                        // Relationships
+                        entity.HasOne(p => p.Order)
+              .WithOne(o => o.Payment)
+              .HasForeignKey<Payment>(p => p.OrderId)
+              .OnDelete(DeleteBehavior.Cascade);
+
+                        // Indexes
+                        entity.HasIndex(p => p.TransactionId)
+              .IsUnique();
                   });
 
                   // OrderItem Configuration
