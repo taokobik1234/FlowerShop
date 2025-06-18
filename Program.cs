@@ -111,6 +111,7 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IOrderService, OrderService>(); 
+builder.Services.AddScoped<IAddressService, AddressService>();
 
 var app = builder.Build(); // Build the application after all services are registered
 
