@@ -4,26 +4,6 @@ using BackEnd_FLOWER_SHOP.DTOs.Response.Address; // Added reference to your Addr
 using BackEnd_FLOWER_SHOP.DTOs.Request.Product;
 namespace BackEnd_FLOWER_SHOP.Dtos.Request.Order
 {
-
-    public class ProductDtoForOrderItem
-    {
-        public long Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public decimal BasePrice { get; set; }
-        public FlowerStatus FlowerStatus { get; set; }
-        public string Condition { get; set; }
-        public ICollection<ImageUploadDto> ImageUploads { get; set; } // Assuming ImageUploadDto exists
-    }
-
-    // Assuming an ImageUploadDto exists from your Product/Image API
-    public class ImageUploadDto
-    {
-        public string ImageUrl { get; set; }
-        public string PublicId { get; set; }
-    }
-
-
     /// <summary>
     /// DTO for creating a new order from an existing cart.
     /// </summary>
