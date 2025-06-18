@@ -1,5 +1,6 @@
 using BackEnd_FLOWER_SHOP.Data;
-using BackEnd_FLOWER_SHOP.Dtos.Order;
+using BackEnd_FLOWER_SHOP.Dtos.Response.Order;
+using BackEnd_FLOWER_SHOP.Dtos.Request.Order;
 using BackEnd_FLOWER_SHOP.Entities;
 using BackEnd_FLOWER_SHOP.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity; // For UserManager
 using BackEnd_FLOWER_SHOP.DTOs.Response.Address; // Added reference to your AddressDTO namespace
-
+using BackEnd_FLOWER_SHOP.DTOs.Request.Product;
 namespace BackEnd_FLOWER_SHOP.Services.Order
 {
     /// <summary>
@@ -169,7 +170,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 {
                     Id = oi.Id,
                     ProductId = oi.ProductId,
-                    Product = new ProductDtoForOrderItem // Map simplified product details
+                    Product = new ProductResponseDto // Map simplified product details
                     {
                         Id = oi.Product.Id,
                         Name = oi.Product.Name,
@@ -177,8 +178,9 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                         Description = oi.Product.Description,
                         FlowerStatus = oi.Product.flowerstatus,
                         Condition = oi.Product.Condition,
-                        ImageUploads = oi.Product.ImageUploads.Select(iu => new ImageUploadDto
+                        Images = oi.Product.ImageUploads.Select(iu => new ImageResponseDto // Changed from ImageUploadDto to ImageResponseDto
                         {
+                            Id = iu.Id, // Assuming ImageResponseDto has an Id
                             ImageUrl = iu.ImageUrl,
                             PublicId = iu.PublicId
                         }).ToList()
@@ -342,7 +344,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 {
                     Id = oi.Id,
                     ProductId = oi.ProductId,
-                    Product = oi.Product != null ? new ProductDtoForOrderItem // Map simplified product details
+                    Product = oi.Product != null ? new ProductResponseDto // Map simplified product details
                     {
                         Id = oi.Product.Id,
                         Name = oi.Product.Name,
@@ -350,11 +352,12 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                         Description = oi.Product.Description,
                         FlowerStatus = oi.Product.flowerstatus,
                         Condition = oi.Product.Condition,
-                        ImageUploads = oi.Product.ImageUploads?.Select(iu => new ImageUploadDto
+                        Images = oi.Product.ImageUploads?.Select(iu => new ImageResponseDto // Changed from ImageUploadDto to ImageResponseDto
                         {
+                            Id = iu.Id, // Assuming ImageResponseDto has an Id
                             ImageUrl = iu.ImageUrl,
                             PublicId = iu.PublicId
-                        }).ToList() ?? new List<ImageUploadDto>()
+                        }).ToList() ?? new List<ImageResponseDto>()
                     } : null,
                     Quantity = oi.Quantity,
                     Price = oi.Price,
