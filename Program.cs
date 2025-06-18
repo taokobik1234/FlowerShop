@@ -4,6 +4,7 @@ using BackEnd_FLOWER_SHOP.Data; // Assuming ApplicationDbContext is here
 using BackEnd_FLOWER_SHOP.Entities; // Assuming ApplicationUser and ApplicationRole are here
 using BackEnd_FLOWER_SHOP.Services;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
+using BackEnd_FLOWER_SHOP.Services.Order;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -110,6 +111,8 @@ builder.Services.AddScoped<IPricingService, PricingService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<IOrderService, OrderService>(); 
+builder.Services.AddScoped<IAddressService, AddressService>();
 
 var app = builder.Build(); // Build the application after all services are registered
 

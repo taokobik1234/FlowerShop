@@ -28,5 +28,6 @@ namespace BackEnd_FLOWER_SHOP.Entities
         public Payment Payment { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public PaymentMethod PaymentMethod { get; set; }
     }
 }

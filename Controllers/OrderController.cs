@@ -1,274 +1,177 @@
-using BackEnd_FLOWER_SHOP.Data;
-using BackEnd_FLOWER_SHOP.Entities;
-using BackEnd_FLOWER_SHOP.Enums;
-using BackEnd_FLOWER_SHOP.DTOs;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
+using BackEnd_FLOWER_SHOP.Dtos.Response.Order;
+using BackEnd_FLOWER_SHOP.Dtos.Request.Order;
+using BackEnd_FLOWER_SHOP.Services.Order;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
 
 namespace BackEnd_FLOWER_SHOP.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Requires authentication for all actions in this controller
     public class OrdersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IOrderService _orderService;
 
-        public OrdersController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public OrdersController(IOrderService orderService)
         {
-            _context = context;
-            _userManager = userManager;
+            _orderService = orderService;
         }
 
-        // POST: api/Orders
-        // Creates a new order from the user's cart
+        /// <summary>
+        /// Creates a new order for the authenticated user from their cart.
+        /// </summary>
+        /// <param name="createOrderDto">The order creation request containing cart and address details.</param>
+        /// <returns>A 201 Created response with the new order details, or 400 Bad Request if validation fails.</returns>
         [HttpPost]
-        public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto createOrderDto)
+        [Authorize] // Requires authentication
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequestDto createOrderDto)
         {
-            var userId = User.Identity.IsAuthenticated ? _userManager.GetUserId(User) : null;
-            if (userId == null)
+            if (!ModelState.IsValid)
             {
-                return Unauthorized("User is not authenticated.");
+                return BadRequest(ModelState);
             }
 
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
             {
-                return NotFound("User not found.");
+                return Unauthorized("User ID not found in token.");
             }
-
-            // Fetch the user's cart
-            var cart = await _context.Carts
-                .Include(c => c.CartItems)
-                .ThenInclude(ci => ci.Product)
-                .FirstOrDefaultAsync(c => c.UserId == user.Id);
-
-            if (cart == null || !cart.CartItems.Any())
-            {
-                return BadRequest("Cart is empty or does not exist for this user.");
-            }
-
-            // Get the address
-            var address = await _context.Addresses.FindAsync(createOrderDto.AddressId);
-            if (address == null || address.ApplicationUserId != user.Id)
-            {
-                return BadRequest("Invalid address ID or address does not belong to the user.");
-            }
-
-            var order = new Order
-            {
-                UserId = user.Id,
-                AddressId = address.Id,
-                OrderStatus = ShippingStatus.Pending, // Initial status
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                OrderItems = new List<OrderItem>()
-            };
-
-            foreach (var cartItem in cart.CartItems)
-            {
-                var orderItem = new OrderItem
-                {
-                    ProductId = cartItem.ProductId,
-                    Quantity = cartItem.Quantity,
-                    Price = (int)cartItem.Price, // Assuming Price in OrderItem is int, adjust if decimal
-                    Name = cartItem.Product.Name,
-                    UserId = user.Id // Link OrderItem to the user as well
-                };
-                order.OrderItems.Add(orderItem);
-
-                // Optionally, deduct stock from product
-                cartItem.Product.StockQuantity -= cartItem.Quantity;
-            }
-
-            // Calculate total sum for the order (not mapped to DB, but useful for DTO)
-            order.Sum = order.OrderItems.Sum(oi => (decimal)oi.Price * oi.Quantity);
-
-            _context.Orders.Add(order);
-            _context.Carts.Remove(cart); // Clear the cart after creating order
-
-            await _context.SaveChangesAsync();
-
-            var orderDto = new OrderDto
-            {
-                Id = order.Id,
-                UserId = order.UserId,
-                AddressId = order.AddressId,
-                TrackingNumber = order.TrackingNumber,
-                OrderStatus = order.OrderStatus.ToString(),
-                Sum = order.Sum,
-                CreatedAt = order.CreatedAt,
-                UpdatedAt = order.UpdatedAt,
-                OrderItems = order.OrderItems.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    ProductId = oi.ProductId,
-                    Quantity = oi.Quantity,
-                    Price = oi.Price,
-                    Name = oi.Name
-                }).ToList()
-            };
-
-            return CreatedAtAction(nameof(GetOrderById), new { id = order.Id }, orderDto);
-        }
-
-        // GET: api/Orders/{id}
-        // Retrieves a specific order by ID
-        [HttpGet("{id}")]
-        public async Task<ActionResult<OrderDto>> GetOrderById(long id)
-        {
-            var userId = User.Identity.IsAuthenticated ? _userManager.GetUserId(User) : null;
-            if (userId == null)
-            {
-                return Unauthorized("User is not authenticated.");
-            }
-
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-                .Include(o => o.Address)
-                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == long.Parse(userId));
-
-            if (order == null)
-            {
-                return NotFound($"Order with ID {id} not found or does not belong to the current user.");
-            }
-
-            var orderDto = new OrderDto
-            {
-                Id = order.Id,
-                UserId = order.UserId,
-                AddressId = order.AddressId,
-                TrackingNumber = order.TrackingNumber,
-                OrderStatus = order.OrderStatus.ToString(),
-                Sum = order.OrderItems.Sum(oi => (decimal)oi.Price * oi.Quantity), // Calculate sum on retrieval
-                CreatedAt = order.CreatedAt,
-                UpdatedAt = order.UpdatedAt,
-                OrderItems = order.OrderItems.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    ProductId = oi.ProductId,
-                    Quantity = oi.Quantity,
-                    Price = oi.Price,
-                    Name = oi.Name
-                }).ToList(),
-                Address = new AddressDto // Include address details
-                {
-                    Id = order.Address.Id,
-                    FirstName = order.Address.FirstName,
-                    LastName = order.Address.LastName,
-                    StreetAddress = order.Address.StreetAddress,
-                    City = order.Address.City,
-                    Country = order.Address.Country,
-                    ZipCode = order.Address.ZipCode
-                }
-            };
-
-            return Ok(orderDto);
-        }
-
-        // GET: api/Orders/user
-        // Retrieves all orders for the authenticated user
-        [HttpGet("user")]
-        public async Task<ActionResult<IEnumerable<OrderDto>>> GetUserOrders()
-        {
-            var userId = User.Identity.IsAuthenticated ? _userManager.GetUserId(User) : null;
-            if (userId == null)
-            {
-                return Unauthorized("User is not authenticated.");
-            }
-
-            var orders = await _context.Orders
-                .Where(o => o.UserId == long.Parse(userId))
-                .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-                .Include(o => o.Address)
-                .OrderByDescending(o => o.CreatedAt)
-                .ToListAsync();
-
-            var orderDtos = orders.Select(order => new OrderDto
-            {
-                Id = order.Id,
-                UserId = order.UserId,
-                AddressId = order.AddressId,
-                TrackingNumber = order.TrackingNumber,
-                OrderStatus = order.OrderStatus.ToString(),
-                Sum = order.OrderItems.Sum(oi => (decimal)oi.Price * oi.Quantity),
-                CreatedAt = order.CreatedAt,
-                UpdatedAt = order.UpdatedAt,
-                OrderItems = order.OrderItems.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    ProductId = oi.ProductId,
-                    Quantity = oi.Quantity,
-                    Price = oi.Price,
-                    Name = oi.Name
-                }).ToList(),
-                Address = new AddressDto
-                {
-                    Id = order.Address.Id,
-                    FirstName = order.Address.FirstName,
-                    LastName = order.Address.LastName,
-                    StreetAddress = order.Address.StreetAddress,
-                    City = order.Address.City,
-                    Country = order.Address.Country,
-                    ZipCode = order.Address.ZipCode
-                }
-            }).ToList();
-
-            return Ok(orderDtos);
-        }
-
-        // PUT: api/Orders/{id}/status
-        // Updates the status of an order (e.g., for admin/staff)
-        [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin")] // Only Admin can change order status
-        public async Task<IActionResult> UpdateOrderStatus(long id, [FromBody] UpdateOrderStatusDto updateOrderStatusDto)
-        {
-            var order = await _context.Orders.FindAsync(id);
-
-            if (order == null)
-            {
-                return NotFound($"Order with ID {id} not found.");
-            }
-
-            if (!Enum.TryParse(updateOrderStatusDto.NewStatus, true, out ShippingStatus newStatus))
-            {
-                return BadRequest("Invalid order status provided.");
-            }
-
-            order.OrderStatus = newStatus;
-            order.UpdatedAt = DateTime.UtcNow;
 
             try
             {
-                await _context.SaveChangesAsync();
+                var order = await _orderService.CreateOrderFromCartAsync(long.Parse(userId), createOrderDto);
+                return CreatedAtAction(nameof(GetOrderById), new { orderId = order.Id }, order);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (ArgumentException ex)
             {
-                if (!OrderExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return BadRequest(new { message = ex.Message });
             }
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                // Log the exception for debugging
+                Console.WriteLine($"Error creating order: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while creating the order." });
+            }
         }
 
-
-        private bool OrderExists(long id)
+        /// <summary>
+        /// Retrieves a specific order by ID for the authenticated user.
+        /// </summary>
+        /// <param name="orderId">The ID of the order to retrieve.</param>
+        /// <returns>A 200 OK response with the order details, or 404 Not Found if the order does not exist or doesn't belong to the user.</returns>
+        [HttpGet("{orderId}")]
+        [Authorize] // Requires authentication
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetOrderById(long orderId)
         {
-            return _context.Orders.Any(e => e.Id == id);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+
+            var order = await _orderService.GetOrderByIdForUserAsync(long.Parse(userId), orderId);
+
+            if (order == null)
+            {
+                return NotFound($"Order with ID {orderId} not found or does not belong to the user.");
+            }
+
+            return Ok(order);
+        }
+
+        /// <summary>
+        /// Retrieves all orders for the authenticated user.
+        /// </summary>
+        /// <returns>A 200 OK response with a list of the user's orders.</returns>
+        [HttpGet("my-orders")]
+        [Authorize] // Requires authentication
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetMyOrders()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
+            }
+
+            var orders = await _orderService.GetMyOrdersAsync(long.Parse(userId));
+            return Ok(orders);
+        }
+
+        /// <summary>
+        /// Retrieves all orders (Admin only).
+        /// </summary>
+        /// <returns>A 200 OK response with a list of all orders.</returns>
+        [HttpGet]
+        [Authorize(Roles = "Admin")] // Requires Admin role
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)] // For unauthorized roles
+        public async Task<IActionResult> GetAllOrders()
+        {
+            var orders = await _orderService.GetAllOrdersAsync();
+            return Ok(orders);
+        }
+
+        /// <summary>
+        /// Updates the status or tracking number of an order by ID (Admin only).
+        /// </summary>
+        /// <param name="orderId">The ID of the order to update.</param>
+        /// <param name="updateOrderDto">The update request containing new status or tracking number.</param>
+        /// <returns>A 200 OK response with the updated order details, or 400 Bad Request if validation fails/order not found.</returns>
+        [HttpPut("{orderId}")]
+        [Authorize(Roles = "Admin")] // Requires Admin role
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateOrderStatus(long orderId, [FromBody] UpdateOrderRequestDto updateOrderDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var updatedOrder = await _orderService.UpdateOrderStatusAsync(orderId, updateOrderDto);
+                return Ok(updatedOrder);
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating order status: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating the order status." });
+            }
+        }
+
+        /// <summary>
+        /// Deletes an order by ID (Admin only).
+        /// </summary>
+        /// <param name="orderId">The ID of the order to delete.</param>
+        /// <returns>A 204 No Content response if successful, or 404 Not Found if the order does not exist.</returns>
+        [HttpDelete("{orderId}")]
+        [Authorize(Roles = "Admin")] // Requires Admin role
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteOrder(long orderId)
+        {
+            var isDeleted = await _orderService.DeleteOrderAsync(orderId);
+            if (!isDeleted)
+            {
+                return NotFound($"Order with ID {orderId} not found.");
+            }
+            return NoContent(); // 204 No Content for successful deletion
         }
     }
 }

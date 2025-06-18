@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "d4a71310-ce59-4058-ab0d-0d79e7b2268d",
-                            CreationDate = new DateTime(2025, 6, 17, 13, 4, 34, 541, DateTimeKind.Utc).AddTicks(2970),
-                            ModificationDate = new DateTime(2025, 6, 17, 13, 4, 34, 541, DateTimeKind.Utc).AddTicks(2970),
+                            ConcurrencyStamp = "9bbd89a9-b156-4195-afca-986419d6ec01",
+                            CreationDate = new DateTime(2025, 6, 18, 12, 18, 19, 850, DateTimeKind.Utc).AddTicks(592),
+                            ModificationDate = new DateTime(2025, 6, 18, 12, 18, 19, 850, DateTimeKind.Utc).AddTicks(592),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "144d0c73-75ee-4266-9894-44af1cf53110",
-                            CreationDate = new DateTime(2025, 6, 17, 13, 4, 34, 541, DateTimeKind.Utc).AddTicks(3045),
-                            ModificationDate = new DateTime(2025, 6, 17, 13, 4, 34, 541, DateTimeKind.Utc).AddTicks(3045),
+                            ConcurrencyStamp = "28becb66-e2d0-4658-b318-9948fec23f8d",
+                            CreationDate = new DateTime(2025, 6, 18, 12, 18, 19, 850, DateTimeKind.Utc).AddTicks(648),
+                            ModificationDate = new DateTime(2025, 6, 18, 12, 18, 19, 850, DateTimeKind.Utc).AddTicks(648),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -343,6 +343,11 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("TrackingNumber")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -390,8 +395,8 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint");
 
                     b.Property<long?>("UserId")
                         .HasColumnType("bigint");

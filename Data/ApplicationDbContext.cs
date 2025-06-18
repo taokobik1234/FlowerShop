@@ -276,7 +276,11 @@ namespace BackEnd_FLOWER_SHOP.Data
                         .WithOne(oi => oi.Order)
                         .HasForeignKey(oi => oi.OrderId)
                         .OnDelete(DeleteBehavior.Cascade);
-
+                        
+                        entity.Property(o => o.PaymentMethod)
+                        .HasConversion<string>() // Store enum as string
+                        .HasMaxLength(50)
+                        .IsRequired();
                         // Create index on tracking number
                         entity.HasIndex(o => o.TrackingNumber)
                         .IsUnique();

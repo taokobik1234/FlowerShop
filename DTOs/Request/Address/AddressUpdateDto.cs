@@ -1,8 +1,7 @@
-namespace BackEnd_FLOWER_SHOP.DTOs
+namespace BackEnd_FLOWER_SHOP.DTOs.Request.Address
 {
-    public class AddressDto
+    public class AddressUpdateDTO
     {
-        public long Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string StreetAddress { get; set; }
