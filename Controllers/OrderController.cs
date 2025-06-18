@@ -1,121 +1,176 @@
-
-
-
-using BackEnd_FLOWER_SHOP.Data; // Still needed for ApplicationUser, though could be refactored
-using BackEnd_FLOWER_SHOP.DTOs;
-using BackEnd_FLOWER_SHOP.Entities; // Still needed for ApplicationUser, though could be refactored
-using BackEnd_FLOWER_SHOP.Enums; // Potentially still needed for validation or DTO conversion if not fully moved to service
-using BackEnd_FLOWER_SHOP.Services.Interfaces; // New: Reference the service interface
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
+using BackEnd_FLOWER_SHOP.Dtos.Order;
+using BackEnd_FLOWER_SHOP.Services.Order;
 using Microsoft.AspNetCore.Authorization;
-using System; // For ArgumentException
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System;
 
 namespace BackEnd_FLOWER_SHOP.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Requires authentication for all actions in this controller
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
-        private readonly UserManager<ApplicationUser> _userManager; // Still needed to get current user ID
 
-        public OrdersController(IOrderService orderService, UserManager<ApplicationUser> userManager)
+        public OrdersController(IOrderService orderService)
         {
             _orderService = orderService;
-            _userManager = userManager;
         }
 
-        // POST: api/Orders
+        /// <summary>
+        /// Creates a new order for the authenticated user from their cart.
+        /// </summary>
+        /// <param name="createOrderDto">The order creation request containing cart and address details.</param>
+        /// <returns>A 201 Created response with the new order details, or 400 Bad Request if validation fails.</returns>
         [HttpPost]
-        public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto createOrderDto)
+        [Authorize] // Requires authentication
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequestDto createOrderDto)
         {
-            var userId = _userManager.GetUserId(User);
-            if (userId == null)
+            if (!ModelState.IsValid)
             {
-                return Unauthorized("User is not authenticated.");
+                return BadRequest(ModelState);
+            }
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User ID not found in token.");
             }
 
             try
             {
-                var orderDto = await _orderService.CreateOrderAsync(userId, createOrderDto);
-                if (orderDto == null)
-                {
-                    return NotFound("User not found (internal error, should be caught by auth).");
-                }
-                return CreatedAtAction(nameof(GetOrderById), new { id = orderDto.Id }, orderDto);
+                var order = await _orderService.CreateOrderFromCartAsync(long.Parse(userId), createOrderDto);
+                return CreatedAtAction(nameof(GetOrderById), new { orderId = order.Id }, order);
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception for debugging
+                Console.WriteLine($"Error creating order: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while creating the order." });
             }
         }
 
-        // GET: api/Orders/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<OrderDto>> GetOrderById(long id)
+        /// <summary>
+        /// Retrieves a specific order by ID for the authenticated user.
+        /// </summary>
+        /// <param name="orderId">The ID of the order to retrieve.</param>
+        /// <returns>A 200 OK response with the order details, or 404 Not Found if the order does not exist or doesn't belong to the user.</returns>
+        [HttpGet("{orderId}")]
+        [Authorize] // Requires authentication
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetOrderById(long orderId)
         {
-            var userId = _userManager.GetUserId(User);
-            if (userId == null)
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User is not authenticated.");
+                return Unauthorized("User ID not found in token.");
             }
 
-            var orderDto = await _orderService.GetOrderByIdAsync(userId, id);
-            if (orderDto == null)
+            var order = await _orderService.GetOrderByIdForUserAsync(long.Parse(userId), orderId);
+
+            if (order == null)
             {
-                return NotFound($"Order with ID {id} not found or does not belong to the current user.");
+                return NotFound($"Order with ID {orderId} not found or does not belong to the user.");
             }
 
-            return Ok(orderDto);
+            return Ok(order);
         }
 
-        // GET: api/Orders/user
-        [HttpGet("user")]
-        public async Task<ActionResult<IEnumerable<OrderDto>>> GetUserOrders()
+        /// <summary>
+        /// Retrieves all orders for the authenticated user.
+        /// </summary>
+        /// <returns>A 200 OK response with a list of the user's orders.</returns>
+        [HttpGet("my-orders")]
+        [Authorize] // Requires authentication
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetMyOrders()
         {
-            var userId = _userManager.GetUserId(User);
-            if (userId == null)
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized("User is not authenticated.");
+                return Unauthorized("User ID not found in token.");
             }
 
-            var orderDtos = await _orderService.GetUserOrdersAsync(userId);
-            return Ok(orderDtos);
+            var orders = await _orderService.GetMyOrdersAsync(long.Parse(userId));
+            return Ok(orders);
         }
 
-        // PUT: api/Orders/{id}/status
-        [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateOrderStatus(long id, [FromBody] UpdateOrderStatusDto updateOrderStatusDto)
+        /// <summary>
+        /// Retrieves all orders (Admin only).
+        /// </summary>
+        /// <returns>A 200 OK response with a list of all orders.</returns>
+        [HttpGet]
+        [Authorize(Roles = "Admin")] // Requires Admin role
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)] // For unauthorized roles
+        public async Task<IActionResult> GetAllOrders()
         {
+            var orders = await _orderService.GetAllOrdersAsync();
+            return Ok(orders);
+        }
+
+        /// <summary>
+        /// Updates the status or tracking number of an order by ID (Admin only).
+        /// </summary>
+        /// <param name="orderId">The ID of the order to update.</param>
+        /// <param name="updateOrderDto">The update request containing new status or tracking number.</param>
+        /// <returns>A 200 OK response with the updated order details, or 400 Bad Request if validation fails/order not found.</returns>
+        [HttpPut("{orderId}")]
+        [Authorize(Roles = "Admin")] // Requires Admin role
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateOrderStatus(long orderId, [FromBody] UpdateOrderRequestDto updateOrderDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
-                var success = await _orderService.UpdateOrderStatusAsync(id, updateOrderStatusDto.NewStatus);
-                if (!success)
-                {
-                    return NotFound($"Order with ID {id} not found.");
-                }
-                return NoContent();
+                var updatedOrder = await _orderService.UpdateOrderStatusAsync(orderId, updateOrderDto);
+                return Ok(updatedOrder);
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message);
+                return NotFound(new { message = ex.Message });
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                // This catch block is important if you want to handle concurrency specifically
-                // If the service indicates a concurrency issue but the order still exists
-                // then you might want a different response or retry logic.
-                // For now, rethrowing from service is handled as a generic 500 error,
-                // but you can refine this.
-                return StatusCode(500, "A concurrency error occurred while updating the order status.");
+                Console.WriteLine($"Error updating order status: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while updating the order status." });
             }
+        }
+
+        /// <summary>
+        /// Deletes an order by ID (Admin only).
+        /// </summary>
+        /// <param name="orderId">The ID of the order to delete.</param>
+        /// <returns>A 204 No Content response if successful, or 404 Not Found if the order does not exist.</returns>
+        [HttpDelete("{orderId}")]
+        [Authorize(Roles = "Admin")] // Requires Admin role
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteOrder(long orderId)
+        {
+            var isDeleted = await _orderService.DeleteOrderAsync(orderId);
+            if (!isDeleted)
+            {
+                return NotFound($"Order with ID {orderId} not found.");
+            }
+            return NoContent(); // 204 No Content for successful deletion
         }
     }
 }
