@@ -25,6 +25,7 @@ namespace BackEnd_FLOWER_SHOP.Entities
         public ShippingStatus OrderStatus { get; set; }
         [NotMapped] public decimal Sum { get; set; }
 
+        public Payment Payment { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public PaymentMethod PaymentMethod { get; set; }
