@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "145d461d-29cd-43fc-9082-2526a3e1c970",
-                            CreationDate = new DateTime(2025, 6, 18, 14, 49, 56, 248, DateTimeKind.Utc).AddTicks(1814),
-                            ModificationDate = new DateTime(2025, 6, 18, 14, 49, 56, 248, DateTimeKind.Utc).AddTicks(1814),
+                            ConcurrencyStamp = "857e84d0-5616-4708-ad2b-41c8474c2ed0",
+                            CreationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3606),
+                            ModificationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3607),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "2d6177fc-69ba-4e62-9132-919879e92f90",
-                            CreationDate = new DateTime(2025, 6, 18, 14, 49, 56, 248, DateTimeKind.Utc).AddTicks(1883),
-                            ModificationDate = new DateTime(2025, 6, 18, 14, 49, 56, 248, DateTimeKind.Utc).AddTicks(1884),
+                            ConcurrencyStamp = "c5ae1d65-1e7f-4bd9-8732-17a439f673e2",
+                            CreationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3668),
+                            ModificationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3668),
                             Name = "User",
                             NormalizedName = "USER"
                         });

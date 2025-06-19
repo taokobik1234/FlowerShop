@@ -18,17 +18,21 @@ namespace BackEnd_FLOWER_SHOP.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _dbContext;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly RoleManager<ApplicationRole> _roleManager; // Added this line
+
         public UserService(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext dbContext,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            RoleManager<ApplicationRole> roleManager // Added this parameter to the constructor
         )
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _dbContext = dbContext;
             _httpContextAccessor = httpContextAccessor;
+            _roleManager = roleManager; // Assigned the injected RoleManager
         }
 
         public string GetCurrentUserId()
@@ -62,17 +66,41 @@ namespace BackEnd_FLOWER_SHOP.Services
             return user;
         }
 
+        public async Task<IdentityResult> CreateUserWithRole(ApplicationUser user, string password, string roleName)
+        {
+            var result = await _userManager.CreateAsync(user, password);
+            if (result.Succeeded)
+            {
+                // Check if the role exists before creating.
+                // It's generally better to seed roles at application startup (e.g., in Program.cs or a DbInitializer).
+                if (!await _roleManager.RoleExistsAsync(roleName))
+                {
+                    await _roleManager.CreateAsync(new ApplicationRole(roleName));
+                }
+                await _userManager.AddToRoleAsync(user, roleName);
+            }
+            return result;
+        }
+
         public async Task<string> GetRoleAsync(ApplicationUser user)
         {
-            if (user == null || user.RoleId == null)
+            if (user == null)
                 return null;
 
-            var role = await _dbContext.Roles
-                .Where(r => r.Id == user.RoleId)
-                .Select(r => r.Name)
-                .FirstOrDefaultAsync();
+            // This is a more robust way to get roles using UserManager
+            var roles = await _userManager.GetRolesAsync(user);
+            return roles.FirstOrDefault();
 
-            return role;
+            // Original code using _dbContext.Roles with user.RoleId might be problematic
+            // if roles are managed through IdentityUserRoles and not directly via ApplicationUser.RoleId.
+            // The GetRolesAsync method of UserManager is the standard way.
+            // if (user == null || user.RoleId == null)
+            //     return null;
+            // var role = await _dbContext.Roles
+            //     .Where(r => r.Id == user.RoleId)
+            //     .Select(r => r.Name)
+            //     .FirstOrDefaultAsync();
+            // return role;
         }
     }
 }
