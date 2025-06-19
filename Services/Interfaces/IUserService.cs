@@ -14,7 +14,8 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
         Task<ApplicationUser> GetByEmail(string email);
         Task<ApplicationUser> GetByUserName(string username);
         Task<IdentityResult> Create(ApplicationUser user, string password);
-        Task<IdentityResult> CreateUserWithRole(ApplicationUser user, string password, string roleName); 
+        Task<IdentityResult> CreateUserWithRole(ApplicationUser user, string password, string roleName);
+         Task<IdentityResult> UpdateUserRoleAsync(string userId, string newRoleName); // New method 
         Task<string> GetRoleAsync(ApplicationUser user);
     }
 }

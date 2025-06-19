@@ -107,6 +107,25 @@ namespace BackEnd_FLOWER_SHOP.Controllers
 
             return Ok(usersWithRoles);
         }
+        [HttpPost("update-user-role")]
+        public async Task<IActionResult> UpdateUserRole([FromBody] UpdateUserRoleDto updateDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _userService.UpdateUserRoleAsync(updateDto.UserId, updateDto.NewRoleName);
+
+            if (result.Succeeded)
+            {
+                return Ok($"User role updated successfully for User ID: {updateDto.UserId} to role: {updateDto.NewRoleName}.");
+            }
+            else
+            {
+                return BadRequest(new { message = "Failed to update user role.", errors = result.Errors.Select(e => e.Description) });
+            }
+        }
     }
 }
 // sample to add to any controller to change access level from all user to only admin

@@ -18,21 +18,21 @@ namespace BackEnd_FLOWER_SHOP.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _dbContext;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly RoleManager<ApplicationRole> _roleManager; // Added this line
+        private readonly RoleManager<ApplicationRole> _roleManager;
 
         public UserService(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext dbContext,
             IHttpContextAccessor httpContextAccessor,
-            RoleManager<ApplicationRole> roleManager // Added this parameter to the constructor
+            RoleManager<ApplicationRole> roleManager
         )
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _dbContext = dbContext;
             _httpContextAccessor = httpContextAccessor;
-            _roleManager = roleManager; // Assigned the injected RoleManager
+            _roleManager = roleManager;
         }
 
         public string GetCurrentUserId()
@@ -90,17 +90,41 @@ namespace BackEnd_FLOWER_SHOP.Services
             // This is a more robust way to get roles using UserManager
             var roles = await _userManager.GetRolesAsync(user);
             return roles.FirstOrDefault();
+        }
 
-            // Original code using _dbContext.Roles with user.RoleId might be problematic
-            // if roles are managed through IdentityUserRoles and not directly via ApplicationUser.RoleId.
-            // The GetRolesAsync method of UserManager is the standard way.
-            // if (user == null || user.RoleId == null)
-            //     return null;
-            // var role = await _dbContext.Roles
-            //     .Where(r => r.Id == user.RoleId)
-            //     .Select(r => r.Name)
-            //     .FirstOrDefaultAsync();
-            // return role;
+        // New method to update user role
+        public async Task<IdentityResult> UpdateUserRoleAsync(string userId, string newRoleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "User not found." });
+            }
+
+            // Check if the new role exists
+            if (!await _roleManager.RoleExistsAsync(newRoleName))
+            {
+                return IdentityResult.Failed(new IdentityError { Description = $"Role '{newRoleName}' does not exist." });
+            }
+
+            // Get current roles of the user
+            var currentRoles = await _userManager.GetRolesAsync(user);
+
+            // Remove user from all current roles
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            if (!removeResult.Succeeded)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "Failed to remove user from existing roles." });
+            }
+
+            // Add user to the new role
+            var addResult = await _userManager.AddToRoleAsync(user, newRoleName);
+            if (!addResult.Succeeded)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "Failed to add user to new role." });
+            }
+
+            return IdentityResult.Success;
         }
     }
 }
