@@ -511,19 +511,19 @@ namespace BackEnd_FLOWER_SHOP.Services
                     ? query.OrderBy(p => p.Name)
                     : query.OrderByDescending(p => p.Name),
 
-                ProductSortBy.PriceAscending => query.OrderBy(p => p.BasePrice),
+                ProductSortBy.Price => direction == SortDirection.Ascending
+                    ? query.OrderBy(p => p.BasePrice)
+                    : query.OrderByDescending(p => p.BasePrice),
 
-                ProductSortBy.PriceDescending => query.OrderByDescending(p => p.BasePrice),
-
-                ProductSortBy.Newest => query.OrderByDescending(p => p.CreatedAt),
-
-                ProductSortBy.Oldest => query.OrderBy(p => p.CreatedAt),
+                ProductSortBy.Newest => direction == SortDirection.Descending
+                    ? query.OrderBy(p => p.CreatedAt) // Oldest first
+                    : query.OrderByDescending(p => p.CreatedAt), // Newest first
 
                 ProductSortBy.StockQuantity => direction == SortDirection.Ascending
                     ? query.OrderBy(p => p.StockQuantity)
                     : query.OrderByDescending(p => p.StockQuantity),
 
-                _ => query.OrderByDescending(p => p.CreatedAt)
+                _ => query.OrderByDescending(p => p.CreatedAt) // Default: newest first
             };
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BackEnd_FLOWER_SHOP.DTOs.Request;
 using BackEnd_FLOWER_SHOP.DTOs.Request.Payment;
 using BackEnd_FLOWER_SHOP.DTOs.Response.Payment;
 using BackEnd_FLOWER_SHOP.Enums;
@@ -41,10 +42,22 @@ namespace BackEnd_FLOWER_SHOP.Controllers
 
                 if (payment.Method == PaymentMethod.VNPay && !string.IsNullOrEmpty(payment.PaymentUrl))
                 {
-                    return Ok(payment);
+                    return Ok(new ApiResponse<PaymentResponse>
+                    {
+                        Success = true,
+                        Message = "Payment created successfully",
+                        Data = payment
+                    });
                 }
 
-                return CreatedAtAction(nameof(GetPayment), payment);
+                return CreatedAtAction(nameof(GetPayment),
+                    new { paymentId = payment.PaymentId },
+                    new ApiResponse<PaymentResponse>
+                    {
+                        Success = true,
+                        Message = "Payment created successfully",
+                        Data = payment
+                    });
             }
             catch (Exception ex)
             {
@@ -61,7 +74,12 @@ namespace BackEnd_FLOWER_SHOP.Controllers
             try
             {
                 var payment = await _paymentService.GetPaymentByIdAsync(paymentId);
-                return Ok(payment);
+                return Ok(new ApiResponse<PaymentResponse>
+                {
+                    Success = true,
+                    Message = "Payment retrieved successfully",
+                    Data = payment
+                });
             }
             catch (Exception ex)
             {
