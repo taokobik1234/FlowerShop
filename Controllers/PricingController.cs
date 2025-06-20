@@ -6,12 +6,14 @@ using BackEnd_FLOWER_SHOP.DTOs.Request;
 using BackEnd_FLOWER_SHOP.DTOs.Request.PricingRule;
 using BackEnd_FLOWER_SHOP.DTOs.Response.PricingRule;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BackEnd_FLOWER_SHOP.Controllers
 {
     [ApiController]
     [Route("api/pricing")]
+    [Authorize(Roles = "Admin")]
     public class PricingController : ControllerBase
     {
         private readonly IPricingService _pricingService;

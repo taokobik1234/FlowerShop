@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using BackEnd_FLOWER_SHOP.DTOs.Request.Category;
 using BackEnd_FLOWER_SHOP.Entities;
 using BackEnd_FLOWER_SHOP.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BackEnd_FLOWER_SHOP.Controllers
 {
     [Route("api/category")]
+    [Authorize(Roles = "Admin")]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;

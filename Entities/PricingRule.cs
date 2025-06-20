@@ -8,6 +8,7 @@ namespace BackEnd_FLOWER_SHOP.Entities
     public class PricingRule
     {
         public long PricingRuleId { get; set; }
+        public string Description { get; set; }
         public string? Condition { get; set; }
         public string? SpecialDay { get; set; }
         public TimeSpan? StartTime { get; set; }

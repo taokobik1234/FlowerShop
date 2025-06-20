@@ -8,8 +8,6 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.PricingRule
     public class PricingRuleResponseDto
     {
         public long PricingRuleId { get; set; }
-        public long? FlowerId { get; set; }
-        public string? ProductName { get; set; }
         public string? Condition { get; set; }
         public string? SpecialDay { get; set; }
         public TimeSpan? StartTime { get; set; }

@@ -448,6 +448,9 @@ namespace BackEnd_FLOWER_SHOP.Data
                         .IsRequired(false)
                         .HasMaxLength(200);
 
+                        entity.Property(pr => pr.Description)
+                        .HasMaxLength(500);
+
                         entity.Property(pr => pr.SpecialDay)
                         .IsRequired(false)
                         .HasMaxLength(100);

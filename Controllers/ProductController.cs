@@ -7,11 +7,13 @@ using BackEnd_FLOWER_SHOP.DTOs.Request.Product;
 using BackEnd_FLOWER_SHOP.DTOs.Response.Product;
 using BackEnd_FLOWER_SHOP.Entities;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BackEnd_FLOWER_SHOP.Controllers
 {
     [Route("api/products")]
+    [Authorize(Roles = "Admin")]
     public class ProductController : ControllerBase
     {
         private readonly ICloudinaryService _cloudinaryService;

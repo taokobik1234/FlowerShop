@@ -8,6 +8,8 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Request.PricingRule
 {
     public class PricingRuleCreateDto
     {
+        [Required]
+        public string Description { get; set; }
         [StringLength(100)]
         public string? Condition { get; set; } // "new", "old", "low_stock", etc.
 
@@ -29,9 +31,6 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Request.PricingRule
         [Required]
         [Range(1, 1000, ErrorMessage = "Priority must be between 1 and 1000")]
         public int Priority { get; set; }
-
-        [Required]
-        public long CreatedBy { get; set; }
 
         // List of product IDs - if null or empty, the rule is global
         public List<long>? ProductIds { get; set; }

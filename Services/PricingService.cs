@@ -15,7 +15,6 @@ namespace BackEnd_FLOWER_SHOP.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<PricingService> _logger;
-
         public PricingService(ApplicationDbContext context, ILogger<PricingService> logger)
         {
             _context = context;
@@ -241,6 +240,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 // Create the pricing rule
                 var rule = new PricingRule
                 {
+                    Description = ruleDto.Description,
                     Condition = ruleDto.Condition,
                     SpecialDay = ruleDto.SpecialDay,
                     StartTime = ruleDto.StartTime,
@@ -255,7 +255,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                     FixedPrice = ruleDto.FixedPrice,
                     Priority = ruleDto.Priority,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = ruleDto.CreatedBy,
+                    CreatedBy = 1,
                     IsGlobal = ruleDto.IsGlobal
                 };
 
