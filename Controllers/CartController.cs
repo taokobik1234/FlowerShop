@@ -74,7 +74,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         /// Update cart item quantity
         /// </summary>
         [HttpPut("update")]
-        public async Task<ActionResult<CartResponseDto>> UpdateCartItem([FromBody] UpdateCartItemDto updateCartItemDto)
+        public async Task<ActionResult<CartResponseDto>> UpdateCartItems([FromBody] List<UpdateCartItemDto> updateCartItemDtos)
         {
             try
             {
@@ -82,7 +82,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                     return BadRequest(ModelState);
 
                 var currentUserId = long.Parse(_userService.GetCurrentUserId());
-                var cart = await _cartService.UpdateCartItemAsync(currentUserId, updateCartItemDto);
+                var cart = await _cartService.UpdateCartItemAsync(currentUserId, updateCartItemDtos);
                 return Ok(cart);
             }
             catch (ArgumentException ex)
@@ -95,7 +95,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while updating cart item" });
+                return StatusCode(500, new { message = "An error occurred while updating cart items" });
             }
         }
 

@@ -57,6 +57,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 RoleId = 2 // Set default RoleId to 2 (User)
             };
             var result = await _userService.Create(user, registerDto.Password);
+            await _userService.AddUserToRoleAsync(user, "User");
             if (!result.Succeeded)
             {
                 return StatusCode(500, "Failed to register");

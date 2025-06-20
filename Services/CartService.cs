@@ -110,7 +110,7 @@ namespace BackEnd_FLOWER_SHOP.Services
             return await GetCartByUserIdAsync(userId);
         }
 
-        public async Task<CartResponseDto> UpdateCartItemAsync(long userId, UpdateCartItemDto updateCartItemDto)
+        public async Task<CartResponseDto> UpdateCartItemAsync(long userId, List<UpdateCartItemDto> updateCartItemDtos)
         {
             var cart = await _context.Carts
                 .Include(c => c.CartItems)
@@ -120,22 +120,25 @@ namespace BackEnd_FLOWER_SHOP.Services
             if (cart == null)
                 throw new ArgumentException("Cart not found");
 
-            var cartItem = cart.CartItems
-                .FirstOrDefault(ci => ci.Id == updateCartItemDto.CartItemId);
-
-            if (cartItem == null)
-                throw new ArgumentException("Cart item not found");
-
-            if (updateCartItemDto.Quantity == 0)
+            foreach (var updateDto in updateCartItemDtos)
             {
-                cart.CartItems.Remove(cartItem);
-            }
-            else
-            {
-                if (cartItem.Product.StockQuantity < updateCartItemDto.Quantity)
-                    throw new InvalidOperationException("Insufficient stock");
+                var cartItem = cart.CartItems
+                    .FirstOrDefault(ci => ci.Id == updateDto.CartItemId);
 
-                cartItem.Quantity = updateCartItemDto.Quantity;
+                if (cartItem == null)
+                    throw new ArgumentException($"Cart item with ID {updateDto.CartItemId} not found");
+
+                if (updateDto.Quantity == 0)
+                {
+                    cart.CartItems.Remove(cartItem);
+                }
+                else
+                {
+                    if (cartItem.Product.StockQuantity < updateDto.Quantity)
+                        throw new InvalidOperationException($"Insufficient stock for product {cartItem.Product.Name}");
+
+                    cartItem.Quantity = updateDto.Quantity;
+                }
             }
 
             await _context.SaveChangesAsync();

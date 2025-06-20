@@ -11,7 +11,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
     {
         Task<CartResponseDto> GetCartByUserIdAsync(long userId);
         Task<CartResponseDto> AddToCartAsync(long userId, AddCartItemDto addToCartDto);
-        Task<CartResponseDto> UpdateCartItemAsync(long userId, UpdateCartItemDto updateCartItemDto);
+        Task<CartResponseDto> UpdateCartItemAsync(long userId, List<UpdateCartItemDto> updateCartItemDtos);
         Task<bool> RemoveFromCartAsync(long userId, long cartItemId);
         Task<bool> ClearCartAsync(long userId);
         Task<int> GetCartItemCountAsync(long userId);

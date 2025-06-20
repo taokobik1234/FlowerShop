@@ -60,6 +60,38 @@ namespace BackEnd_FLOWER_SHOP.Services
             throw new NotImplementedException();
         }
 
+        public async Task<IdentityResult> AddUserToRoleAsync(ApplicationUser user, string roleName)
+        {
+            // Validate inputs
+            if (user == null)
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Description = "User cannot be null"
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(roleName))
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Description = "Role name cannot be empty"
+                });
+            }
+
+            // Check if role exists
+            var roleExists = await _roleManager.RoleExistsAsync(roleName);
+            if (!roleExists)
+            {
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Description = $"Role '{roleName}' does not exist"
+                });
+            }
+
+            // Add user to role
+            return await _userManager.AddToRoleAsync(user, roleName);
+        }
         public async Task<ApplicationUser> GetByUserName(string username)
         {
             ApplicationUser user = await _userManager.FindByNameAsync(username);
