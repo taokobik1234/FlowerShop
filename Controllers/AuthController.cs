@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using BackEnd_FLOWER_SHOP.DTOs.Request;
 using BackEnd_FLOWER_SHOP.DTOs.Request.User;
 using BackEnd_FLOWER_SHOP.DTOs.Response.User;
 using BackEnd_FLOWER_SHOP.Entities;
@@ -35,16 +36,31 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Invalid input data",
+                    Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()
+                });
             var existingUserByEmail = await _userService.GetByEmail(registerDto.Email);
             if (existingUserByEmail != null)
             {
-                return BadRequest("Email already exist");
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Registration failed",
+                    Errors = new List<string> { "Email already exists" }
+                });
             }
             var existingUserByUserName = await _userService.GetByUserName(registerDto.UserName);
             if (existingUserByUserName != null)
             {
-                return BadRequest("UserName already exist");
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Registration failed",
+                    Errors = new List<string> { "Username already exists" }
+                });
             }
             var user = new ApplicationUser
             {
@@ -56,13 +72,21 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 EmailConfirmed = true, // Set to false if you want email confirmation
                 RoleId = 2 // Set default RoleId to 2 (User)
             };
-            var result = await _userService.Create(user, registerDto.Password);
-            await _userService.AddUserToRoleAsync(user, "User");
+            var result = await _userService.CreateUserWithRole(user, registerDto.Password, "User");
             if (!result.Succeeded)
             {
-                return StatusCode(500, "Failed to register");
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Registration failed",
+                    Errors = result.Errors.Select(e => e.Description).ToList()
+                });
             }
-            return Ok("Register successfully");
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = "Registration successful"
+            });
         }
 
         [HttpPost("login")]

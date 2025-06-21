@@ -133,7 +133,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-        var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>(); 
+        var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
 
         // Ensure roles exist (as per your ApplicationDbContextModelSnapshot, "Admin" and "User" should be seeded)
         string adminRoleName = "Admin";
@@ -211,7 +211,7 @@ using (var scope = app.Services.CreateScope())
 // END: Admin User Seeding Logic
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
