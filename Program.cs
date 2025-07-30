@@ -124,7 +124,9 @@ builder.Services.AddScoped<IVnpay, Vnpay>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 
-var app = builder.Build(); // Build the application after all services are registered
+var app = builder.Build();
+app.Urls.Add("https://localhost:5001");
+app.Urls.Add("http://localhost:5000");
 
 // START: Admin User Seeding Logic
 using (var scope = app.Services.CreateScope())
