@@ -82,6 +82,40 @@ namespace BackEnd_FLOWER_SHOP.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        public async Task<ActionResult<Category>> UpdateCategory(long id, [FromBody] CategoryDto categoryDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var category = new Category
+                {
+                    Name = categoryDto.Name,
+                    Description = categoryDto.Description
+                };
+
+                var updatedCategory = await _categoryService.UpdateCategoryAsync(id, category);
+                if (updatedCategory == null)
+                {
+                    return NotFound($"Category with ID {id} not found.");
+                }
+
+                return Ok(updatedCategory);
+            }
+            catch (ArgumentNullException)
+            {
+                return BadRequest("Category data is required.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteCategory(long id)
         {
