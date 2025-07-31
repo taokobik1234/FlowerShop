@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "568a82a9-29c2-4d32-8c6f-e7b08e421b59",
-                            CreationDate = new DateTime(2025, 7, 31, 11, 28, 43, 72, DateTimeKind.Utc).AddTicks(805),
-                            ModificationDate = new DateTime(2025, 7, 31, 11, 28, 43, 72, DateTimeKind.Utc).AddTicks(806),
+                            ConcurrencyStamp = "857e84d0-5616-4708-ad2b-41c8474c2ed0",
+                            CreationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3606),
+                            ModificationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3607),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "44b2f62f-272b-465f-990a-bcb0883d297c",
-                            CreationDate = new DateTime(2025, 7, 31, 11, 28, 43, 72, DateTimeKind.Utc).AddTicks(897),
-                            ModificationDate = new DateTime(2025, 7, 31, 11, 28, 43, 72, DateTimeKind.Utc).AddTicks(898),
+                            ConcurrencyStamp = "c5ae1d65-1e7f-4bd9-8732-17a439f673e2",
+                            CreationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3668),
+                            ModificationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3668),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -484,11 +484,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.Property<long>("CreatedBy")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -611,41 +606,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.HasIndex("PricingRuleId");
 
                     b.ToTable("ProductPricingRules");
-                });
-
-            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.RefreshToken", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsRevoked")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -913,17 +873,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.Navigation("PricingRule");
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.RefreshToken", b =>
-                {
-                    b.HasOne("BackEnd_FLOWER_SHOP.Entities.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>

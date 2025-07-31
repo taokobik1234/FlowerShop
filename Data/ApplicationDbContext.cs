@@ -28,8 +28,6 @@ namespace BackEnd_FLOWER_SHOP.Data
             public DbSet<ProductPricingRule> ProductPricingRules { get; set; }
             public DbSet<ProductCategory> ProductCategories { get; set; }
             public DbSet<Payment> Payments { get; set; }
-            public DbSet<RefreshToken> RefreshTokens { get; set; }
-
             protected override void OnModelCreating(ModelBuilder builder)
             {
                   base.OnModelCreating(builder);
@@ -508,27 +506,6 @@ namespace BackEnd_FLOWER_SHOP.Data
                         };
 
                   builder.Entity<ApplicationRole>().HasData(roles);
-
-                  // RefreshToken Configuration
-                  builder.Entity<RefreshToken>(entity =>
-                  {
-                        entity.ToTable("RefreshTokens");
-
-                        entity.Property(rt => rt.Token)
-                      .HasMaxLength(500)
-                      .IsRequired();
-
-                        entity.Property(rt => rt.ExpiryDate)
-                      .IsRequired();
-
-                        entity.HasOne(rt => rt.User)
-                      .WithMany()
-                      .HasForeignKey(rt => rt.UserId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
-                        entity.HasIndex(rt => rt.Token)
-                      .IsUnique();
-                  });
             }
       }
 }
