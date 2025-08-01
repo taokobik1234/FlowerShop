@@ -14,8 +14,9 @@ namespace BackEnd_FLOWER_SHOP.Entities
             UpdatedAt = DateTime.UtcNow;
             ImageUploads = new List<ImageUpload>();
             ProductPricingRules = new List<ProductPricingRule>();
-        }
 
+        }
+        public ICollection<Review> Reviews { get; set; }
         public long Id { get; set; }
         public string Name { get; set; }
         public FlowerStatus flowerstatus { get; set; }

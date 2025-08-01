@@ -79,7 +79,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                     {
                         Success = false,
                         Message = "Invalid product ID",
-                    }); ;
+                    });
                 }
 
                 var product = await _productService.GetProductByIdAsync(id);
