@@ -13,11 +13,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace BackEnd_FLOWER_SHOP.Controllers
 {
     [Route("api/products")]
-    [Authorize(Roles = "Admin")]
+    [ApiController]
     public class ProductController : ControllerBase
     {
         private readonly ICloudinaryService _cloudinaryService;
-        private readonly IProductService _productService; // Assuming you have this service
+        private readonly IProductService _productService;
         private readonly ILogger<ProductController> _logger;
 
         public ProductController(ICloudinaryService cloudinaryService, IProductService productService, ILogger<ProductController> logger)
@@ -25,9 +25,10 @@ namespace BackEnd_FLOWER_SHOP.Controllers
             _cloudinaryService = cloudinaryService;
             _productService = productService;
             _logger = logger;
-
         }
+
         [HttpPost]
+        [Authorize(Roles = "Admin")] // Only Admin can create products
         public async Task<IActionResult> CreateProduct([FromForm] ProductCreateDto productDto)
         {
             try
@@ -67,6 +68,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous] // Allow all users including guests to view individual products
         public async Task<IActionResult> GetProduct(long id)
         {
             try
@@ -102,6 +104,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")] // Only Admin can update products
         public async Task<IActionResult> UpdateProduct(long id, [FromForm] ProductCreateDto productDto)
         {
             try
@@ -151,6 +154,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] // Only Admin can delete products
         public async Task<IActionResult> DeleteProduct(long id)
         {
             try
@@ -175,6 +179,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous] // Allow all users including guests to browse products
         public async Task<IActionResult> GetProducts([FromQuery] ProductListingRequestDto request)
         {
             try
