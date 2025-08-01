@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using BackEnd_FLOWER_SHOP.DTOs.Request;
 using BackEnd_FLOWER_SHOP.DTOs.Request.Product;
+using BackEnd_FLOWER_SHOP.DTOs.Response;
 using BackEnd_FLOWER_SHOP.DTOs.Response.Product;
 using BackEnd_FLOWER_SHOP.Entities;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace BackEnd_FLOWER_SHOP.Controllers
 {
@@ -27,6 +30,67 @@ namespace BackEnd_FLOWER_SHOP.Controllers
             _logger = logger;
         }
 
+        // AddReview action
+        [HttpPost("{id}/reviews")]
+        [Authorize] // Ensure only authenticated users can add reviews
+        public async Task<IActionResult> AddReview(long id, [FromBody] ReviewCreateDto reviewCreateDto)
+        {
+            try
+            {
+                if (id <= 0)
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Invalid product ID",
+                    });
+                }
+
+                // Ensure the DTO product ID matches the route parameter
+                if (id != reviewCreateDto.ProductId)
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Product ID in route and body must match.",
+                    });
+                }
+
+                var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdString) || !long.TryParse(userIdString, out long userId))
+                {
+                    return Unauthorized(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Unauthorized access.",
+                    });
+                }
+
+                var review = await _productService.AddReviewAsync(userId, reviewCreateDto);
+
+                if (review == null)
+                {
+                    return NotFound(new ApiResponse
+                    {
+                        Success = false,
+                        Message = $"Product with ID {id} not found.",
+                    });
+                }
+
+                return CreatedAtAction(nameof(GetProduct), new { id = reviewCreateDto.ProductId }, review);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error adding review for product with ID: {id}");
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "An error occurred while adding the review.",
+                });
+            }
+        }
+        
+        // CreateProduct action
         [HttpPost]
         [Authorize(Roles = "Admin")] // Only Admin can create products
         public async Task<IActionResult> CreateProduct([FromForm] ProductCreateDto productDto)

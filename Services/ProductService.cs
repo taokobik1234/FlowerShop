@@ -171,7 +171,52 @@ namespace BackEnd_FLOWER_SHOP.Services
                 throw;
             }
         }
+        public async Task<ReviewResponseDto?> AddReviewAsync(long userId, ReviewCreateDto reviewCreateDto)
+    {
+        try
+        {
+            var product = await _context.Products.FindAsync(reviewCreateDto.ProductId);
+            if (product == null)
+            {
+                _logger.LogInformation($"Product with ID {reviewCreateDto.ProductId} not found.");
+                return null;
+            }
 
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                _logger.LogInformation($"User with ID {userId} not found.");
+                return null;
+            }
+
+            var review = new Review
+            {
+                ProductId = reviewCreateDto.ProductId,
+                UserId = userId,
+                Rating = reviewCreateDto.Rating,
+                Comment = reviewCreateDto.Comment,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _context.Reviews.AddAsync(review);
+            await _context.SaveChangesAsync();
+
+            return new ReviewResponseDto
+            {
+                Id = review.Id,
+                Rating = review.Rating,
+                Comment = review.Comment,
+                UserId = review.UserId,
+                UserName = user.FirstName + " " + user.LastName,
+                CreatedAt = review.CreatedAt
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error adding review for product {reviewCreateDto.ProductId}.");
+            throw;
+        }
+    }
         public async Task<ProductResponseDto?> GetProductByIdAsync(long id)
         {
             try
@@ -180,6 +225,9 @@ namespace BackEnd_FLOWER_SHOP.Services
                     .Include(p => p.ImageUploads)
                     .Include(p => p.ProductCategories)
                         .ThenInclude(pc => pc.Category)
+                    // Include the Reviews and the User who wrote them
+                    .Include(p => p.Reviews)
+                        .ThenInclude(r => r.User)
                     .FirstOrDefaultAsync(p => p.Id == id);
 
                 if (product == null)
@@ -187,6 +235,11 @@ namespace BackEnd_FLOWER_SHOP.Services
                     _logger.LogInformation($"Product with ID {id} not found");
                     return null;
                 }
+
+                // Calculate the average rating
+                var averageRating = product.Reviews != null && product.Reviews.Any()
+                    ? product.Reviews.Average(r => r.Rating)
+                    : 0.0;
 
                 return new ProductResponseDto
                 {
@@ -210,7 +263,19 @@ namespace BackEnd_FLOWER_SHOP.Services
                         Name = pc.Category.Name
                     }).ToList() ?? new List<CategoryResponseDto>(),
                     CreatedAt = product.CreatedAt,
-                    UpdatedAt = product.UpdatedAt
+                    UpdatedAt = product.UpdatedAt,
+                    
+                    // Populate the new review properties
+                    AverageRating = averageRating,
+                    Reviews = product.Reviews?.Select(r => new ReviewResponseDto
+                    {
+                        Id = r.Id,
+                        Rating = r.Rating,
+                        Comment = r.Comment,
+                        UserId = r.UserId,
+                        UserName = r.User.FirstName + " " + r.User.LastName,
+                        CreatedAt = r.CreatedAt
+                    }).ToList() ?? new List<ReviewResponseDto>()
                 };
             }
             catch (Exception ex)

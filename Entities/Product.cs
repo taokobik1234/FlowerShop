@@ -16,6 +16,7 @@ namespace BackEnd_FLOWER_SHOP.Entities
             ProductPricingRules = new List<ProductPricingRule>();
 
         }
+        
         public ICollection<Review> Reviews { get; set; }
         public long Id { get; set; }
         public string Name { get; set; }

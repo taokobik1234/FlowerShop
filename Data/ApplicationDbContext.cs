@@ -15,7 +15,7 @@ namespace BackEnd_FLOWER_SHOP.Data
                 : base(options)
             {
             }
-
+            public DbSet<Review> Reviews { get; set; }
             public DbSet<Product> Products { get; set; }
             public DbSet<Order> Orders { get; set; }
             public DbSet<OrderItem> OrderItems { get; set; }
@@ -72,7 +72,20 @@ namespace BackEnd_FLOWER_SHOP.Data
                         .HasMaxLength(256)
                         .IsRequired();
                   });
-
+                  builder.Entity<Review>(entity =>
+                  {
+                        entity.ToTable("Reviews");
+                        
+                        entity.HasOne(r => r.Product)
+                              .WithMany(p => p.Reviews)
+                              .HasForeignKey(r => r.ProductId)
+                              .OnDelete(DeleteBehavior.Cascade);
+                              
+                        entity.HasOne(r => r.User)
+                              .WithMany()
+                              .HasForeignKey(r => r.UserId)
+                              .OnDelete(DeleteBehavior.Cascade);
+                  });
                   // ApplicationRole Configuration
                   builder.Entity<ApplicationRole>(entity =>
                   {
@@ -142,6 +155,10 @@ namespace BackEnd_FLOWER_SHOP.Data
                         .WithOne(pr => pr.Product)
                         .HasForeignKey(pr => pr.ProductId)
                         .OnDelete(DeleteBehavior.Cascade);
+                        entity.HasMany(p => p.Reviews)
+                              .WithOne(r => r.Product)
+                              .HasForeignKey(r => r.ProductId)
+                              .OnDelete(DeleteBehavior.Cascade);
                   });
 
                   // Category Configuration
