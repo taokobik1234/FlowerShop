@@ -540,7 +540,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 Condition = product.Condition,
                 StockQuantity = product.StockQuantity,
                 IsActive = product.IsActive,
-                MainImageUrl = product.ImageUploads?.FirstOrDefault()?.ImageUrl,
+                ImageUrls = product.ImageUploads?.Select(img => img.ImageUrl).ToList() ?? new List<string>(),
                 Categories = product.ProductCategories?.Select(pc => new CategoryResponseDto
                 {
                     Id = pc.Category.Id,
