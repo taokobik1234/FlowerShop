@@ -18,7 +18,7 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.Product
         public string Condition { get; set; }
         public long StockQuantity { get; set; }
         public bool IsActive { get; set; }
-        public string? MainImageUrl { get; set; }
+        public List<string> ImageUrls { get; set; } = new List<string>();
         public List<CategoryResponseDto> Categories { get; set; } = new List<CategoryResponseDto>();
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

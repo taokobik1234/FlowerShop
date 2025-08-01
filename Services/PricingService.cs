@@ -438,6 +438,7 @@ namespace BackEnd_FLOWER_SHOP.Services
             {
                 PricingRuleId = rule.PricingRuleId,
                 Condition = rule.Condition,
+                Description = rule.Description,
                 SpecialDay = rule.SpecialDay,
                 StartTime = rule.StartTime,
                 EndTime = rule.EndTime,
