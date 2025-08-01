@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "857e84d0-5616-4708-ad2b-41c8474c2ed0",
-                            CreationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3606),
-                            ModificationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3607),
+                            ConcurrencyStamp = "b69f0dc2-83cf-47d7-9109-a3dd6c089ef1",
+                            CreationDate = new DateTime(2025, 8, 1, 16, 45, 8, 69, DateTimeKind.Utc).AddTicks(8712),
+                            ModificationDate = new DateTime(2025, 8, 1, 16, 45, 8, 69, DateTimeKind.Utc).AddTicks(8712),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "c5ae1d65-1e7f-4bd9-8732-17a439f673e2",
-                            CreationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3668),
-                            ModificationDate = new DateTime(2025, 6, 19, 15, 12, 27, 666, DateTimeKind.Utc).AddTicks(3668),
+                            ConcurrencyStamp = "e400a403-fb65-4cb8-8b26-dd6f7749a7ab",
+                            CreationDate = new DateTime(2025, 8, 1, 16, 45, 8, 69, DateTimeKind.Utc).AddTicks(8767),
+                            ModificationDate = new DateTime(2025, 8, 1, 16, 45, 8, 69, DateTimeKind.Utc).AddTicks(8767),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -484,6 +484,11 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.Property<long>("CreatedBy")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -606,6 +611,40 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.HasIndex("PricingRuleId");
 
                     b.ToTable("ProductPricingRules");
+                });
+
+            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.Review", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Reviews", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
@@ -875,6 +914,25 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.Review", b =>
+                {
+                    b.HasOne("BackEnd_FLOWER_SHOP.Entities.Product", "Product")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackEnd_FLOWER_SHOP.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
                 {
                     b.HasOne("BackEnd_FLOWER_SHOP.Entities.ApplicationRole", null)
@@ -963,6 +1021,8 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.Navigation("ProductCategories");
 
                     b.Navigation("ProductPricingRules");
+
+                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }
