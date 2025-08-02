@@ -45,6 +45,12 @@ namespace BackEnd_FLOWER_SHOP.Services
             return userId;
         }
 
+        public long? GetUserId()
+        {
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return long.TryParse(userIdClaim, out var userId) ? userId : null;
+        }
+
         public async Task<IdentityResult> Create(ApplicationUser user, string password)
         {
             return await _userManager.CreateAsync(user, password);

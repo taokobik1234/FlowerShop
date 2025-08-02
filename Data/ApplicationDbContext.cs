@@ -29,6 +29,7 @@ namespace BackEnd_FLOWER_SHOP.Data
             public DbSet<ProductCategory> ProductCategories { get; set; }
             public DbSet<Payment> Payments { get; set; }
             public DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
+            public DbSet<UserProductView> UserProductViews { get; set; }
             protected override void OnModelCreating(ModelBuilder builder)
             {
                   base.OnModelCreating(builder);
@@ -525,6 +526,23 @@ builder.Entity<Address>(entity =>
                         };
 
                   builder.Entity<ApplicationRole>().HasData(roles);
+
+                  builder.Entity<UserProductView>(entity =>
+                  {
+                        entity.HasKey(e => e.Id);
+                        entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
+                        entity.HasIndex(e => e.ViewedAt);
+
+                        entity.HasOne(e => e.User)
+                              .WithMany()
+                              .HasForeignKey(e => e.UserId)
+                              .OnDelete(DeleteBehavior.Cascade);
+
+                        entity.HasOne(e => e.Product)
+                              .WithMany()
+                              .HasForeignKey(e => e.ProductId)
+                              .OnDelete(DeleteBehavior.Cascade);
+                  });
             }
       }
 }

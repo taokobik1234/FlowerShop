@@ -21,64 +21,66 @@ namespace BackEnd_FLOWER_SHOP.Controllers
     {
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IProductService _productService;
+        private readonly IUserService _userService;
         private readonly ILogger<ProductController> _logger;
 
-        public ProductController(ICloudinaryService cloudinaryService, IProductService productService, ILogger<ProductController> logger)
+        public ProductController(ICloudinaryService cloudinaryService, IProductService productService, ILogger<ProductController> logger, IUserService userService)
         {
             _cloudinaryService = cloudinaryService;
             _productService = productService;
+            _userService = userService;
             _logger = logger;
         }
 
         // AddReview action
         [HttpPost("reviews")]
         [Authorize] // Ensure only authenticated users can add reviews
-public async Task<IActionResult> AddReview([FromBody] ReviewCreateDto reviewCreateDto)
-{
-    try
-    {
-        if (reviewCreateDto.ProductId <= 0)
+        public async Task<IActionResult> AddReview([FromBody] ReviewCreateDto reviewCreateDto)
         {
-            return BadRequest(new ApiResponse
+            try
             {
-                Success = false,
-                Message = "Invalid product ID",
-            });
-        }
+                if (reviewCreateDto.ProductId <= 0)
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Invalid product ID",
+                    });
+                }
 
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdString) || !long.TryParse(userIdString, out long userId))
-        {
-            return Unauthorized(new ApiResponse
+                var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdString) || !long.TryParse(userIdString, out long userId))
+                {
+                    return Unauthorized(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Unauthorized access.",
+                    });
+                }
+
+                var review = await _productService.AddReviewAsync(userId, reviewCreateDto);
+
+                if (review == null)
+                {
+                    return NotFound(new ApiResponse
+                    {
+                        Success = false,
+                        Message = $"Product with ID {reviewCreateDto.ProductId} not found.",
+                    });
+                }
+
+                return CreatedAtAction(nameof(GetProduct), new { id = reviewCreateDto.ProductId }, review);
+            }
+            catch (Exception ex)
             {
-                Success = false,
-                Message = "Unauthorized access.",
-            });
+                _logger.LogError(ex, $"Error adding review for product with ID: {reviewCreateDto.ProductId}");
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "An error occurred while adding the review.",
+                });
+            }
         }
-
-        var review = await _productService.AddReviewAsync(userId, reviewCreateDto);
-
-        if (review == null)
-        {
-            return NotFound(new ApiResponse
-            {
-                Success = false,
-                Message = $"Product with ID {reviewCreateDto.ProductId} not found.",
-            });
-        }
-
-        return CreatedAtAction(nameof(GetProduct), new { id = reviewCreateDto.ProductId }, review);
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, $"Error adding review for product with ID: {reviewCreateDto.ProductId}");
-        return StatusCode(500, new ApiResponse
-        {
-            Success = false,
-            Message = "An error occurred while adding the review.",
-        });
-    }
-}
 
         // CreateProduct action
         [HttpPost]
@@ -147,6 +149,13 @@ public async Task<IActionResult> AddReview([FromBody] ReviewCreateDto reviewCrea
                         Errors = new List<string> { "Product not found" }
                     });
                 }
+
+                var userId = _userService.GetUserId();
+                if (userId.HasValue)
+                {
+                    await _productService.TrackProductViewAsync(userId.Value, id);
+                }
+
 
                 return Ok(product);
             }
@@ -275,6 +284,72 @@ public async Task<IActionResult> AddReview([FromBody] ReviewCreateDto reviewCrea
                     Errors = new List<string> { ex.Message }
                 });
             }
+        }
+
+        [HttpPost("{productId}/track-view")]
+        [Authorize]
+        public async Task<IActionResult> TrackView(long productId)
+        {
+            var userId = _userService.GetUserId();
+            if (!userId.HasValue) return Unauthorized();
+            await _productService.TrackProductViewAsync(userId.Value, productId);
+            return Ok(new { message = "View tracked successfully" });
+        }
+
+        [HttpGet("recommendations/for-you")]
+        [Authorize]
+        public async Task<IActionResult> GetRecommendationsForUser([FromQuery] int count = 6)
+        {
+            var userId = _userService.GetUserId();
+            if (!userId.HasValue) return Unauthorized();
+
+            var recommendations = await _productService.GetRecommendationsForUserAsync(userId.Value, count);
+            return Ok(new
+            {
+                products = recommendations,
+                type = "Personalized",
+                count = recommendations.Count
+            });
+        }
+
+        [HttpGet("recommendations/popular")]
+        public async Task<IActionResult> GetPopularProducts([FromQuery] int count = 6)
+        {
+            var popularProducts = await _productService.GetPopularProductsAsync(count);
+            return Ok(new
+            {
+                products = popularProducts,
+                type = "Popular",
+                count = popularProducts.Count
+            });
+        }
+
+        [HttpGet("{productId}/similar")]
+        public async Task<IActionResult> GetSimilarProducts(long productId, [FromQuery] int count = 6)
+        {
+            var similarProducts = await _productService.GetSimilarProductsAsync(productId, count);
+            return Ok(new
+            {
+                products = similarProducts,
+                type = "Similar",
+                count = similarProducts.Count
+            });
+        }
+
+        [HttpGet("recommendations/recently-viewed")]
+        [Authorize]
+        public async Task<IActionResult> GetRecentlyViewed([FromQuery] int count = 6)
+        {
+            var userId = _userService.GetUserId();
+            if (!userId.HasValue) return Unauthorized();
+
+            var recentlyViewed = await _productService.GetRecentlyViewedAsync(userId.Value, count);
+            return Ok(new
+            {
+                products = recentlyViewed,
+                type = "Recently Viewed",
+                count = recentlyViewed.Count
+            });
         }
     }
 }

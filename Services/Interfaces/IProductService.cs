@@ -20,6 +20,12 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
         Task<bool> ExistProductAsync(long id);
         Task<ReviewResponseDto?> AddReviewAsync(long userId, ReviewCreateDto reviewCreateDto);
         Task<ProductListingResponseDto> GetProductListingsAsync(ProductListingRequestDto request);
+
+        Task TrackProductViewAsync(long userId, long productId);
+        Task<List<ProductSummaryDto>> GetRecommendationsForUserAsync(long userId, int count = 6);
+        Task<List<ProductSummaryDto>> GetPopularProductsAsync(int count = 6);
+        Task<List<ProductSummaryDto>> GetSimilarProductsAsync(long productId, int count = 6);
+        Task<List<ProductSummaryDto>> GetRecentlyViewedAsync(long userId, int count = 6);
     }
 
 }
