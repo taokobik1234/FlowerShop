@@ -33,28 +33,18 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         // AddReview action
-        [HttpPost("{id}/reviews")]
+        [HttpPost("reviews")]
         [Authorize] // Ensure only authenticated users can add reviews
-        public async Task<IActionResult> AddReview(long id, [FromBody] ReviewCreateDto reviewCreateDto)
+        public async Task<IActionResult> AddReview([FromBody] ReviewCreateDto reviewCreateDto)
         {
             try
             {
-                if (id <= 0)
+                if (reviewCreateDto.ProductId <= 0)
                 {
                     return BadRequest(new ApiResponse
                     {
                         Success = false,
                         Message = "Invalid product ID",
-                    });
-                }
-
-                // Ensure the DTO product ID matches the route parameter
-                if (id != reviewCreateDto.ProductId)
-                {
-                    return BadRequest(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Product ID in route and body must match.",
                     });
                 }
 
@@ -75,7 +65,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                     return NotFound(new ApiResponse
                     {
                         Success = false,
-                        Message = $"Product with ID {id} not found.",
+                        Message = $"Product with ID {reviewCreateDto.ProductId} not found.",
                     });
                 }
 
@@ -83,7 +73,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error adding review for product with ID: {id}");
+                _logger.LogError(ex, $"Error adding review for product with ID: {reviewCreateDto.ProductId}");
                 return StatusCode(500, new ApiResponse
                 {
                     Success = false,

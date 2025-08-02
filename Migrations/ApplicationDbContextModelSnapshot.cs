@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "4edcc8f6-9788-4473-9953-8fa81e98ddaa",
-                            CreationDate = new DateTime(2025, 8, 2, 9, 16, 20, 200, DateTimeKind.Utc).AddTicks(8350),
-                            ModificationDate = new DateTime(2025, 8, 2, 9, 16, 20, 200, DateTimeKind.Utc).AddTicks(8351),
+                            ConcurrencyStamp = "0f2f5008-c89b-4e0a-a270-19469d3e3c2a",
+                            CreationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4556),
+                            ModificationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4556),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "2a3d6990-4fd4-4583-845f-fa83d15ee018",
-                            CreationDate = new DateTime(2025, 8, 2, 9, 16, 20, 200, DateTimeKind.Utc).AddTicks(8433),
-                            ModificationDate = new DateTime(2025, 8, 2, 9, 16, 20, 200, DateTimeKind.Utc).AddTicks(8434),
+                            ConcurrencyStamp = "85ae6749-a4cf-450d-8571-fee0c729becc",
+                            CreationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4620),
+                            ModificationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4621),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -167,6 +167,9 @@ namespace BackEnd_FLOWER_SHOP.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("LoyaltyPoints")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -320,6 +323,37 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("ImageUploads", (string)null);
+                });
+
+            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.LoyaltyTransaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<decimal>("PointsChange")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("LoyaltyTransactions", (string)null);
                 });
 
             modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.Order", b =>
@@ -840,6 +874,17 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.LoyaltyTransaction", b =>
+                {
+                    b.HasOne("BackEnd_FLOWER_SHOP.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.Order", b =>
