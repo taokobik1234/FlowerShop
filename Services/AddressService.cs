@@ -1,6 +1,6 @@
 using BackEnd_FLOWER_SHOP.Data;
 using BackEnd_FLOWER_SHOP.DTOs.Request.Address;
-using BackEnd_FLOWER_SHOP.DTOs.Response.Address; // Changed to AddressDTO
+using BackEnd_FLOWER_SHOP.DTOs.Response.Address;
 using BackEnd_FLOWER_SHOP.Entities;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +19,7 @@ namespace BackEnd_FLOWER_SHOP.Services
             _context = context;
         }
 
-        public async Task<AddressDTO> GetAddressByIdAsync(long addressId) // Changed
+        public async Task<AddressDTO> GetAddressByIdAsync(long addressId)
         {
             var address = await _context.Addresses.FindAsync(addressId);
             if (address == null)
@@ -27,34 +27,30 @@ namespace BackEnd_FLOWER_SHOP.Services
                 return null;
             }
 
-            return new AddressDTO // Changed
+            return new AddressDTO
             {
                 Id = address.Id,
-                FirstName = address.FirstName,
-                LastName = address.LastName,
+                FullName = address.FullName,
                 StreetAddress = address.StreetAddress,
-                Country = address.Country,
                 City = address.City,
-                ZipCode = address.ZipCode,
+                PhoneNumber = address.PhoneNumber,
                 ApplicationUserId = address.ApplicationUserId
             };
         }
 
-        public async Task<List<AddressDTO>> GetUserAddressesAsync(long userId) // Changed
+        public async Task<List<AddressDTO>> GetUserAddressesAsync(long userId)
         {
             var addresses = await _context.Addresses
                 .Where(a => a.ApplicationUserId == userId)
                 .ToListAsync();
 
-            return addresses.Select(address => new AddressDTO // Changed
+            return addresses.Select(address => new AddressDTO
             {
                 Id = address.Id,
-                FirstName = address.FirstName,
-                LastName = address.LastName,
+                FullName = address.FullName,
                 StreetAddress = address.StreetAddress,
-                Country = address.Country,
                 City = address.City,
-                ZipCode = address.ZipCode,
+                PhoneNumber = address.PhoneNumber,
                 ApplicationUserId = address.ApplicationUserId
             }).ToList();
         }
@@ -69,27 +65,23 @@ namespace BackEnd_FLOWER_SHOP.Services
 
             var address = new Address
             {
-                FirstName = addressDto.FirstName,
-                LastName = addressDto.LastName,
+                FullName = addressDto.FullName,
                 StreetAddress = addressDto.StreetAddress,
-                Country = addressDto.Country,
                 City = addressDto.City,
-                ZipCode = addressDto.ZipCode,
+                PhoneNumber = addressDto.PhoneNumber,
                 ApplicationUserId = userId
             };
 
             _context.Addresses.Add(address);
             await _context.SaveChangesAsync();
 
-            return new AddressDTO // Changed
+            return new AddressDTO
             {
                 Id = address.Id,
-                FirstName = address.FirstName,
-                LastName = address.LastName,
+                FullName = address.FullName,
                 StreetAddress = address.StreetAddress,
-                Country = address.Country,
                 City = address.City,
-                ZipCode = address.ZipCode,
+                PhoneNumber = address.PhoneNumber,
                 ApplicationUserId = address.ApplicationUserId
             };
         }
@@ -102,25 +94,21 @@ namespace BackEnd_FLOWER_SHOP.Services
                 return null;
             }
 
-            address.FirstName = addressDto.FirstName;
-            address.LastName = addressDto.LastName;
+            address.FullName = addressDto.FullName;
             address.StreetAddress = addressDto.StreetAddress;
-            address.Country = addressDto.Country;
             address.City = addressDto.City;
-            address.ZipCode = addressDto.ZipCode;
+            address.PhoneNumber = addressDto.PhoneNumber;
 
             _context.Addresses.Update(address);
             await _context.SaveChangesAsync();
 
-            return new AddressDTO // Changed
+            return new AddressDTO
             {
                 Id = address.Id,
-                FirstName = address.FirstName,
-                LastName = address.LastName,
+                FullName = address.FullName,
                 StreetAddress = address.StreetAddress,
-                Country = address.Country,
                 City = address.City,
-                ZipCode = address.ZipCode,
+                PhoneNumber = address.PhoneNumber,
                 ApplicationUserId = address.ApplicationUserId
             };
         }

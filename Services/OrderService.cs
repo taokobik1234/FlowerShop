@@ -147,16 +147,14 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 UserId = order.UserId,
                 UserName = user?.UserName,
                 Address = new AddressDTO
-                {
-                    Id = address.Id,
-                    FirstName = address.FirstName,
-                    LastName = address.LastName,
-                    StreetAddress = address.StreetAddress,
-                    City = address.City,
-                    Country = address.Country,
-                    ZipCode = address.ZipCode,
-                    ApplicationUserId = address.ApplicationUserId
-                },
+{
+    Id = address.Id,
+    FullName = address.FullName,
+    PhoneNumber = address.PhoneNumber,
+    StreetAddress = address.StreetAddress,
+    City = address.City,
+    ApplicationUserId = address.ApplicationUserId
+},
                 TrackingNumber = order.TrackingNumber,
                 OrderStatus = order.OrderStatus,
                 Sum = order.Sum,
@@ -321,16 +319,14 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 UserId = order.UserId,
                 UserName = order.User?.UserName,
                 Address = order.Address != null ? new AddressDTO
-                {
-                    Id = order.Address.Id,
-                    FirstName = order.Address.FirstName,
-                    LastName = order.Address.LastName,
-                    StreetAddress = order.Address.StreetAddress,
-                    City = order.Address.City,
-                    Country = order.Address.Country,
-                    ZipCode = order.Address.ZipCode,
-                    ApplicationUserId = order.Address.ApplicationUserId
-                } : null,
+{
+    Id = order.Address.Id,
+    FullName = order.Address.FullName,
+    PhoneNumber = order.Address.PhoneNumber,
+    StreetAddress = order.Address.StreetAddress,
+    City = order.Address.City,
+    ApplicationUserId = order.Address.ApplicationUserId
+} : null,
                 TrackingNumber = order.TrackingNumber,
                 OrderStatus = order.OrderStatus,
                 Sum = order.Sum,

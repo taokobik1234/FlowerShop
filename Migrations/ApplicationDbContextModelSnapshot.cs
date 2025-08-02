@@ -38,30 +38,20 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Country")
+                    b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("FirstName")
+                    b.Property<string>("PhoneNumber")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("StreetAddress")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<string>("ZipCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -109,18 +99,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "0f2f5008-c89b-4e0a-a270-19469d3e3c2a",
-                            CreationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4556),
-                            ModificationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4556),
+                            ConcurrencyStamp = "72cf9636-5922-4d6b-ae84-8c62846391c2",
+                            CreationDate = new DateTime(2025, 8, 2, 10, 43, 11, 979, DateTimeKind.Utc).AddTicks(8334),
+                            ModificationDate = new DateTime(2025, 8, 2, 10, 43, 11, 979, DateTimeKind.Utc).AddTicks(8334),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "85ae6749-a4cf-450d-8571-fee0c729becc",
-                            CreationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4620),
-                            ModificationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4621),
+                            ConcurrencyStamp = "9b48a4fe-c493-474a-af5c-0e2468f8c0cd",
+                            CreationDate = new DateTime(2025, 8, 2, 10, 43, 11, 979, DateTimeKind.Utc).AddTicks(8394),
+                            ModificationDate = new DateTime(2025, 8, 2, 10, 43, 11, 979, DateTimeKind.Utc).AddTicks(8394),
                             Name = "User",
                             NormalizedName = "USER"
                         });

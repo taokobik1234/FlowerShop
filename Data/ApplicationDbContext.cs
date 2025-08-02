@@ -393,40 +393,31 @@ namespace BackEnd_FLOWER_SHOP.Data
 
                   // ==================== ADDRESS CONFIGURATION ====================
 
-                  // Address Configuration
-                  builder.Entity<Address>(entity =>
-                  {
-                        entity.ToTable("Addresses");
+builder.Entity<Address>(entity =>
+{
+    entity.ToTable("Addresses");
 
-                        entity.Property(a => a.FirstName)
-                        .HasMaxLength(50)
-                        .IsRequired();
+    entity.Property(a => a.FullName)
+        .HasMaxLength(100)
+        .IsRequired();
 
-                        entity.Property(a => a.LastName)
-                        .HasMaxLength(50)
-                        .IsRequired();
+    entity.Property(a => a.PhoneNumber)
+        .HasMaxLength(20) // Adjust max length as needed
+        .IsRequired();
 
-                        entity.Property(a => a.StreetAddress)
-                        .HasMaxLength(200)
-                        .IsRequired();
+    entity.Property(a => a.StreetAddress)
+        .HasMaxLength(200)
+        .IsRequired();
 
-                        entity.Property(a => a.Country)
-                        .HasMaxLength(100)
-                        .IsRequired();
+    entity.Property(a => a.City)
+        .HasMaxLength(100)
+        .IsRequired();
 
-                        entity.Property(a => a.City)
-                        .HasMaxLength(100)
-                        .IsRequired();
-
-                        entity.Property(a => a.ZipCode)
-                        .HasMaxLength(20)
-                        .IsRequired();
-
-                        entity.HasOne(a => a.User)
-                        .WithMany(u => u.Addresses)
-                        .HasForeignKey(a => a.ApplicationUserId)
-                        .OnDelete(DeleteBehavior.Cascade);
-                  });
+    entity.HasOne(a => a.User)
+        .WithMany(u => u.Addresses)
+        .HasForeignKey(a => a.ApplicationUserId)
+        .OnDelete(DeleteBehavior.Cascade);
+});
 
                   // ==================== IMAGE UPLOAD CONFIGURATION ====================
 
