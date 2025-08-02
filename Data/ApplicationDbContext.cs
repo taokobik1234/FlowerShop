@@ -28,6 +28,7 @@ namespace BackEnd_FLOWER_SHOP.Data
             public DbSet<ProductPricingRule> ProductPricingRules { get; set; }
             public DbSet<ProductCategory> ProductCategories { get; set; }
             public DbSet<Payment> Payments { get; set; }
+            public DbSet<LoyaltyTransaction> LoyaltyTransactions { get; set; }
             protected override void OnModelCreating(ModelBuilder builder)
             {
                   base.OnModelCreating(builder);
@@ -72,15 +73,25 @@ namespace BackEnd_FLOWER_SHOP.Data
                         .HasMaxLength(256)
                         .IsRequired();
                   });
+                  builder.Entity<LoyaltyTransaction>(entity =>
+                  {
+                        entity.ToTable("LoyaltyTransactions");
+                        entity.HasOne(t => t.User)
+                              .WithMany()
+                              .HasForeignKey(t => t.UserId)
+                              .OnDelete(DeleteBehavior.Cascade);
+                        entity.Property(t => t.CreatedAt)
+                              .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
+                  });
                   builder.Entity<Review>(entity =>
                   {
                         entity.ToTable("Reviews");
-                        
+
                         entity.HasOne(r => r.Product)
                               .WithMany(p => p.Reviews)
                               .HasForeignKey(r => r.ProductId)
                               .OnDelete(DeleteBehavior.Cascade);
-                              
+
                         entity.HasOne(r => r.User)
                               .WithMany()
                               .HasForeignKey(r => r.UserId)

@@ -8,9 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity; // For UserManager
-using BackEnd_FLOWER_SHOP.DTOs.Response.Address; // Added reference to your AddressDTO namespace
+using Microsoft.AspNetCore.Identity;
+using BackEnd_FLOWER_SHOP.DTOs.Response.Address;
 using BackEnd_FLOWER_SHOP.DTOs.Request.Product;
+using BackEnd_FLOWER_SHOP.Services.Interfaces; // Added for ILoyaltyService
+
 namespace BackEnd_FLOWER_SHOP.Services.Order
 {
     /// <summary>
@@ -20,28 +22,17 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-
-        // Assuming you have product, cart, and address services for dependency injection
-        // If not, you might need to adjust how product and cart data is fetched.
-        // For simplicity, I'll directly interact with DbSets where necessary,
-        // but in a real application, you'd likely inject IProductService, ICartService, etc.
-        // private readonly IProductService _productService;
-        // private readonly ICartService _cartService;
-        // private readonly IAddressService _addressService;
+        private readonly ILoyaltyService _loyaltyService; // New: Inject loyalty service
 
         public OrderService(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager
-            // IProductService productService,
-            // ICartService cartService,
-            // IAddressService addressService
+            UserManager<ApplicationUser> userManager,
+            ILoyaltyService loyaltyService // New: Inject loyalty service
             )
         {
             _context = context;
             _userManager = userManager;
-            // _productService = productService;
-            // _cartService = cartService;
-            // _addressService = addressService;
+            _loyaltyService = loyaltyService; // New: Assign loyalty service
         }
 
         /// <summary>
@@ -59,7 +50,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
             var cart = await _context.Carts
                 .Include(c => c.CartItems)
                     .ThenInclude(ci => ci.Product)
-                        .ThenInclude(p => p.ImageUploads) // Include images for ProductDtoForOrderItem
+                        .ThenInclude(p => p.ImageUploads)
                 .FirstOrDefaultAsync(c => c.Id == createOrderDto.CartId && c.UserId == userId);
 
             if (cart == null)
@@ -86,11 +77,11 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
             {
                 UserId = userId,
                 AddressId = createOrderDto.AddressId,
-                OrderStatus = ShippingStatus.Pending, // Default status
+                OrderStatus = ShippingStatus.Pending,
                 PaymentMethod = createOrderDto.PaymentMethod,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                TrackingNumber = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 15).ToUpper(), // Simple tracking number
+                TrackingNumber = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 15).ToUpper(),
                 OrderItems = new List<OrderItem>()
             };
 
@@ -103,8 +94,6 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
 
                 if (product == null)
                 {
-                    // This should ideally not happen if cart items are correctly linked
-                    // but as a safeguard, skip or throw an error.
                     continue;
                 }
 
@@ -117,9 +106,9 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 {
                     ProductId = product.Id,
                     Quantity = cartItem.Quantity,
-                    Price = (int)cartItem.Price, // Cast to int as per OrderItem entity
-                    Name = product.Name, // Store product name at time of order
-                    UserId = userId // Associate order item with the user (optional, can be inferred from order)
+                    Price = (int)cartItem.Price,
+                    Name = product.Name,
+                    UserId = userId
                 };
                 order.OrderItems.Add(orderItem);
 
@@ -130,26 +119,34 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 totalSum += cartItem.Price * cartItem.Quantity;
             }
 
-            order.Sum = totalSum; // Calculate total sum for the order
+            order.Sum = totalSum;
 
             // 5. Add Order to Database
             _context.Orders.Add(order);
 
             // 6. Clear the user's cart after order creation
             _context.CartItem.RemoveRange(cart.CartItems);
-            _context.Carts.Remove(cart); // Or just clear cart.CartItems if you want to keep the cart entity
+            _context.Carts.Remove(cart);
 
             await _context.SaveChangesAsync();
 
-            // 7. Map to DTO and return
+            // 7. Award loyalty points after successful order creation
+            // Example: 1 point for every $10 spent
+            var pointsEarned = Math.Floor(order.Sum / 10);
+            if (pointsEarned > 0)
+            {
+                await _loyaltyService.AddPoints(userId, pointsEarned, $"Points earned from order #{order.Id}");
+            }
+
+            // 8. Map to DTO and return
             var user = await _userManager.FindByIdAsync(userId.ToString());
 
             return new OrderDto
             {
                 Id = order.Id,
                 UserId = order.UserId,
-                UserName = user?.UserName, // Or user.FirstName + " " + user.LastName
-                Address = new AddressDTO // Using your provided AddressDTO
+                UserName = user?.UserName,
+                Address = new AddressDTO
                 {
                     Id = address.Id,
                     FirstName = address.FirstName,
@@ -158,7 +155,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                     City = address.City,
                     Country = address.Country,
                     ZipCode = address.ZipCode,
-                    ApplicationUserId = address.ApplicationUserId // Added this property from your DTO
+                    ApplicationUserId = address.ApplicationUserId
                 },
                 TrackingNumber = order.TrackingNumber,
                 OrderStatus = order.OrderStatus,
@@ -170,7 +167,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 {
                     Id = oi.Id,
                     ProductId = oi.ProductId,
-                    Product = new ProductResponseDto // Map simplified product details
+                    Product = oi.Product != null ? new ProductResponseDto
                     {
                         Id = oi.Product.Id,
                         Name = oi.Product.Name,
@@ -178,13 +175,13 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                         Description = oi.Product.Description,
                         FlowerStatus = oi.Product.flowerstatus,
                         Condition = oi.Product.Condition,
-                        Images = oi.Product.ImageUploads.Select(iu => new ImageResponseDto // Changed from ImageUploadDto to ImageResponseDto
+                        Images = oi.Product.ImageUploads?.Select(iu => new ImageResponseDto
                         {
-                            Id = iu.Id, // Assuming ImageResponseDto has an Id
+                            Id = iu.Id,
                             ImageUrl = iu.ImageUrl,
                             PublicId = iu.PublicId
-                        }).ToList()
-                    },
+                        }).ToList() ?? new List<ImageResponseDto>()
+                    } : null,
                     Quantity = oi.Quantity,
                     Price = oi.Price,
                     Name = oi.Name
@@ -322,8 +319,8 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
             {
                 Id = order.Id,
                 UserId = order.UserId,
-                UserName = order.User?.UserName, // Use null conditional operator
-                Address = order.Address != null ? new AddressDTO // Using your provided AddressDTO
+                UserName = order.User?.UserName,
+                Address = order.Address != null ? new AddressDTO
                 {
                     Id = order.Address.Id,
                     FirstName = order.Address.FirstName,
@@ -332,7 +329,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                     City = order.Address.City,
                     Country = order.Address.Country,
                     ZipCode = order.Address.ZipCode,
-                    ApplicationUserId = order.Address.ApplicationUserId // Added this property from your DTO
+                    ApplicationUserId = order.Address.ApplicationUserId
                 } : null,
                 TrackingNumber = order.TrackingNumber,
                 OrderStatus = order.OrderStatus,
@@ -344,7 +341,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 {
                     Id = oi.Id,
                     ProductId = oi.ProductId,
-                    Product = oi.Product != null ? new ProductResponseDto // Map simplified product details
+                    Product = oi.Product != null ? new ProductResponseDto
                     {
                         Id = oi.Product.Id,
                         Name = oi.Product.Name,
@@ -352,9 +349,9 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                         Description = oi.Product.Description,
                         FlowerStatus = oi.Product.flowerstatus,
                         Condition = oi.Product.Condition,
-                        Images = oi.Product.ImageUploads?.Select(iu => new ImageResponseDto // Changed from ImageUploadDto to ImageResponseDto
+                        Images = oi.Product.ImageUploads?.Select(iu => new ImageResponseDto
                         {
-                            Id = iu.Id, // Assuming ImageResponseDto has an Id
+                            Id = iu.Id,
                             ImageUrl = iu.ImageUrl,
                             PublicId = iu.PublicId
                         }).ToList() ?? new List<ImageResponseDto>()
