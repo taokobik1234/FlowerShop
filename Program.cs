@@ -124,6 +124,7 @@ builder.Services.AddScoped<IVnpay, Vnpay>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<ILoyaltyService, LoyaltyService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
 app.Urls.Add("https://localhost:5001");
