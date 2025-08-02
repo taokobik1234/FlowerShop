@@ -31,65 +31,55 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         // AddReview action
-        [HttpPost("{id}/reviews")]
+        [HttpPost("reviews")]
         [Authorize] // Ensure only authenticated users can add reviews
-        public async Task<IActionResult> AddReview(long id, [FromBody] ReviewCreateDto reviewCreateDto)
+public async Task<IActionResult> AddReview([FromBody] ReviewCreateDto reviewCreateDto)
+{
+    try
+    {
+        if (reviewCreateDto.ProductId <= 0)
         {
-            try
+            return BadRequest(new ApiResponse
             {
-                if (id <= 0)
-                {
-                    return BadRequest(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Invalid product ID",
-                    });
-                }
-
-                // Ensure the DTO product ID matches the route parameter
-                if (id != reviewCreateDto.ProductId)
-                {
-                    return BadRequest(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Product ID in route and body must match.",
-                    });
-                }
-
-                var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (string.IsNullOrEmpty(userIdString) || !long.TryParse(userIdString, out long userId))
-                {
-                    return Unauthorized(new ApiResponse
-                    {
-                        Success = false,
-                        Message = "Unauthorized access.",
-                    });
-                }
-
-                var review = await _productService.AddReviewAsync(userId, reviewCreateDto);
-
-                if (review == null)
-                {
-                    return NotFound(new ApiResponse
-                    {
-                        Success = false,
-                        Message = $"Product with ID {id} not found.",
-                    });
-                }
-
-                return CreatedAtAction(nameof(GetProduct), new { id = reviewCreateDto.ProductId }, review);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error adding review for product with ID: {id}");
-                return StatusCode(500, new ApiResponse
-                {
-                    Success = false,
-                    Message = "An error occurred while adding the review.",
-                });
-            }
+                Success = false,
+                Message = "Invalid product ID",
+            });
         }
-        
+
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString) || !long.TryParse(userIdString, out long userId))
+        {
+            return Unauthorized(new ApiResponse
+            {
+                Success = false,
+                Message = "Unauthorized access.",
+            });
+        }
+
+        var review = await _productService.AddReviewAsync(userId, reviewCreateDto);
+
+        if (review == null)
+        {
+            return NotFound(new ApiResponse
+            {
+                Success = false,
+                Message = $"Product with ID {reviewCreateDto.ProductId} not found.",
+            });
+        }
+
+        return CreatedAtAction(nameof(GetProduct), new { id = reviewCreateDto.ProductId }, review);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, $"Error adding review for product with ID: {reviewCreateDto.ProductId}");
+        return StatusCode(500, new ApiResponse
+        {
+            Success = false,
+            Message = "An error occurred while adding the review.",
+        });
+    }
+}
+
         // CreateProduct action
         [HttpPost]
         [Authorize(Roles = "Admin")] // Only Admin can create products
