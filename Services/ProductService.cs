@@ -778,6 +778,58 @@ namespace BackEnd_FLOWER_SHOP.Services
                 return new List<ProductSummaryDto>();
             }
         }
+        // ==================== New methods for Product Display & Search ====================
+
+        public async Task<List<ProductSummaryDto>> SearchProductsAsync(string? query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return new List<ProductSummaryDto>();
+            }
+
+            try
+            {
+                var products = await _context.Products
+                    .Where(p => p.IsActive && p.Name.ToLower().Contains(query.ToLower()))
+                    .Include(p => p.ImageUploads)
+                    .Include(p => p.ProductCategories)
+                        .ThenInclude(pc => pc.Category)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                return products.Select(MapToProductSummaryDto).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error searching for products with query: {query}");
+                return new List<ProductSummaryDto>();
+            }
+        }
+
+        public async Task<List<string>> GetProductSuggestionsAsync(string? query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return new List<string>();
+            }
+
+            try
+            {
+                var suggestions = await _context.Products
+                    .Where(p => p.IsActive && p.Name.ToLower().Contains(query.ToLower()))
+                    .Select(p => p.Name)
+                    .Distinct()
+                    .Take(10) // Limit the number of suggestions
+                    .ToListAsync();
+
+                return suggestions;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting product suggestions for query: {query}");
+                return new List<string>();
+            }
+        }
 
         // === PRIVATE HELPER METHODS ===
 
@@ -799,5 +851,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                 .ThenByDescending(x => x.Product.CreatedAt)
                 .Select(x => x.Product);
         }
+        
     }
 }

@@ -26,6 +26,10 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
         Task<List<ProductSummaryDto>> GetPopularProductsAsync(int count = 6);
         Task<List<ProductSummaryDto>> GetSimilarProductsAsync(long productId, int count = 6);
         Task<List<ProductSummaryDto>> GetRecentlyViewedAsync(long userId, int count = 6);
+
+        Task<List<ProductSummaryDto>> SearchProductsAsync(string? query);
+
+        Task<List<string>> GetProductSuggestionsAsync(string? query);
     }
 
 }
