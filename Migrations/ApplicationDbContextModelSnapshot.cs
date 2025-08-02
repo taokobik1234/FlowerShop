@@ -109,18 +109,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "0f2f5008-c89b-4e0a-a270-19469d3e3c2a",
-                            CreationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4556),
-                            ModificationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4556),
+                            ConcurrencyStamp = "05c127b9-8886-4245-bc9c-4428ba5561a2",
+                            CreationDate = new DateTime(2025, 8, 2, 14, 24, 13, 867, DateTimeKind.Utc).AddTicks(6743),
+                            ModificationDate = new DateTime(2025, 8, 2, 14, 24, 13, 867, DateTimeKind.Utc).AddTicks(6744),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "85ae6749-a4cf-450d-8571-fee0c729becc",
-                            CreationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4620),
-                            ModificationDate = new DateTime(2025, 8, 2, 9, 44, 5, 960, DateTimeKind.Utc).AddTicks(4621),
+                            ConcurrencyStamp = "ae7a499a-de69-4f9b-b26d-cab68277f45e",
+                            CreationDate = new DateTime(2025, 8, 2, 14, 24, 13, 867, DateTimeKind.Utc).AddTicks(6820),
+                            ModificationDate = new DateTime(2025, 8, 2, 14, 24, 13, 867, DateTimeKind.Utc).AddTicks(6821),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -187,6 +187,15 @@ namespace BackEnd_FLOWER_SHOP.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("RefreshToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("RefreshTokenExpiryTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
                     b.Property<long?>("RoleId")
                         .HasColumnType("bigint");

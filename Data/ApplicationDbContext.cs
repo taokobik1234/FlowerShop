@@ -73,6 +73,12 @@ namespace BackEnd_FLOWER_SHOP.Data
                         entity.Property(u => u.UserName)
                         .HasMaxLength(256)
                         .IsRequired();
+
+                        entity.Property(u => u.RefreshToken)
+                        .HasMaxLength(500).IsRequired(false);
+
+                        entity.Property(u => u.RefreshTokenExpiryTime)
+                        .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
                   });
                   builder.Entity<LoyaltyTransaction>(entity =>
                   {

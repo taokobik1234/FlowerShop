@@ -19,6 +19,8 @@ namespace BackEnd_FLOWER_SHOP.Entities
         public ICollection<Address> Addresses { get; set; } = new List<Address>();
         public virtual ICollection<Order> Orders { get; set; }
 
+        public string? RefreshToken { get; set; }
+        public DateTime RefreshTokenExpiryTime { get; set; }
         // New property for loyalty points
         [Column(TypeName = "decimal(18, 2)")]
         public decimal LoyaltyPoints { get; set; } = 0.00M;

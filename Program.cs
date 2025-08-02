@@ -123,6 +123,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IVnpay, Vnpay>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ILoyaltyService, LoyaltyService>();
 
 var app = builder.Build();
