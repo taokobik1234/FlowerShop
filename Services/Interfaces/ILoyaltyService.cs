@@ -10,5 +10,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
         Task<UserLoyaltyDto> GetUserLoyaltyInfo(long userId);
         Task AddPoints(long userId, decimal amount, string description);
         Task<bool> TryRedeemPoints(long userId, decimal pointsToRedeem, string description);
+        Task<IEnumerable<UserSummaryLoyaltyDto>> GetAllUsersWithLoyaltyInfo();
+        Task<UserSummaryLoyaltyDto> UpdateUserPoints(long userId, decimal newPointsValue);
     }
 }

@@ -351,5 +351,38 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 count = recentlyViewed.Count
             });
         }
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchProducts([FromQuery] string? query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return Ok(new ProductSearchDto
+                {
+                    Query = query,
+                    TotalCount = 0,
+                    Products = new List<ProductSummaryDto>()
+                });
+            }
+
+            var products = await _productService.SearchProductsAsync(query);
+            return Ok(new ProductSearchDto
+            {
+                Query = query,
+                TotalCount = products.Count,
+                Products = products
+            });
+        }
+
+        [HttpGet("autocomplete")]
+        public async Task<IActionResult> GetProductSuggestions([FromQuery] string? query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return Ok(new List<string>());
+            }
+
+            var suggestions = await _productService.GetProductSuggestionsAsync(query);
+            return Ok(suggestions);
+        }
     }
 }

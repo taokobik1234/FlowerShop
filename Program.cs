@@ -1,7 +1,7 @@
 using System.Text;
 using BackEnd_FLOWER_SHOP.Configuration;
-using BackEnd_FLOWER_SHOP.Data; // Assuming ApplicationDbContext is here
-using BackEnd_FLOWER_SHOP.Entities; // Assuming ApplicationUser and ApplicationRole are here
+using BackEnd_FLOWER_SHOP.Data;
+using BackEnd_FLOWER_SHOP.Entities; 
 using BackEnd_FLOWER_SHOP.Services;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
 using BackEnd_FLOWER_SHOP.Services.Order;
@@ -125,6 +125,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ILoyaltyService, LoyaltyService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
 app.Urls.Add("https://localhost:5001");
