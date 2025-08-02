@@ -319,6 +319,7 @@ namespace BackEnd_FLOWER_SHOP.Services
 
                 // Update rule properties
                 rule.Condition = ruleDto.Condition;
+                rule.Description = ruleDto.Description;
                 rule.SpecialDay = ruleDto.SpecialDay;
                 rule.StartTime = ruleDto.StartTime;
                 rule.EndTime = ruleDto.EndTime;
