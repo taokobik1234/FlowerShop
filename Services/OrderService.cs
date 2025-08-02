@@ -319,14 +319,14 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 UserId = order.UserId,
                 UserName = order.User?.UserName,
                 Address = order.Address != null ? new AddressDTO
-{
-    Id = order.Address.Id,
-    FullName = order.Address.FullName,
-    PhoneNumber = order.Address.PhoneNumber,
-    StreetAddress = order.Address.StreetAddress,
-    City = order.Address.City,
-    ApplicationUserId = order.Address.ApplicationUserId
-} : null,
+                {
+                    Id = order.Address.Id,
+                    FullName = order.Address.FullName,
+                    PhoneNumber = order.Address.PhoneNumber,
+                    StreetAddress = order.Address.StreetAddress,
+                    City = order.Address.City,
+                    ApplicationUserId = order.Address.ApplicationUserId
+                } : null,
                 TrackingNumber = order.TrackingNumber,
                 OrderStatus = order.OrderStatus,
                 Sum = order.Sum,
