@@ -28,6 +28,7 @@ namespace BackEnd_FLOWER_SHOP.Data
             public DbSet<ProductPricingRule> ProductPricingRules { get; set; }
             public DbSet<ProductCategory> ProductCategories { get; set; }
             public DbSet<Payment> Payments { get; set; }
+            public DbSet<UserProductView> UserProductViews { get; set; }
             protected override void OnModelCreating(ModelBuilder builder)
             {
                   base.OnModelCreating(builder);
@@ -75,12 +76,12 @@ namespace BackEnd_FLOWER_SHOP.Data
                   builder.Entity<Review>(entity =>
                   {
                         entity.ToTable("Reviews");
-                        
+
                         entity.HasOne(r => r.Product)
                               .WithMany(p => p.Reviews)
                               .HasForeignKey(r => r.ProductId)
                               .OnDelete(DeleteBehavior.Cascade);
-                              
+
                         entity.HasOne(r => r.User)
                               .WithMany()
                               .HasForeignKey(r => r.UserId)
@@ -523,6 +524,23 @@ namespace BackEnd_FLOWER_SHOP.Data
                         };
 
                   builder.Entity<ApplicationRole>().HasData(roles);
+
+                  builder.Entity<UserProductView>(entity =>
+                  {
+                        entity.HasKey(e => e.Id);
+                        entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
+                        entity.HasIndex(e => e.ViewedAt);
+
+                        entity.HasOne(e => e.User)
+                              .WithMany()
+                              .HasForeignKey(e => e.UserId)
+                              .OnDelete(DeleteBehavior.Cascade);
+
+                        entity.HasOne(e => e.Product)
+                              .WithMany()
+                              .HasForeignKey(e => e.ProductId)
+                              .OnDelete(DeleteBehavior.Cascade);
+                  });
             }
       }
 }

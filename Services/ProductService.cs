@@ -172,51 +172,51 @@ namespace BackEnd_FLOWER_SHOP.Services
             }
         }
         public async Task<ReviewResponseDto?> AddReviewAsync(long userId, ReviewCreateDto reviewCreateDto)
-    {
-        try
         {
-            var product = await _context.Products.FindAsync(reviewCreateDto.ProductId);
-            if (product == null)
+            try
             {
-                _logger.LogInformation($"Product with ID {reviewCreateDto.ProductId} not found.");
-                return null;
+                var product = await _context.Products.FindAsync(reviewCreateDto.ProductId);
+                if (product == null)
+                {
+                    _logger.LogInformation($"Product with ID {reviewCreateDto.ProductId} not found.");
+                    return null;
+                }
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogInformation($"User with ID {userId} not found.");
+                    return null;
+                }
+
+                var review = new Review
+                {
+                    ProductId = reviewCreateDto.ProductId,
+                    UserId = userId,
+                    Rating = reviewCreateDto.Rating,
+                    Comment = reviewCreateDto.Comment,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _context.Reviews.AddAsync(review);
+                await _context.SaveChangesAsync();
+
+                return new ReviewResponseDto
+                {
+                    Id = review.Id,
+                    Rating = review.Rating,
+                    Comment = review.Comment,
+                    UserId = review.UserId,
+                    UserName = user.FirstName + " " + user.LastName,
+                    CreatedAt = review.CreatedAt
+                };
             }
-
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null)
+            catch (Exception ex)
             {
-                _logger.LogInformation($"User with ID {userId} not found.");
-                return null;
+                _logger.LogError(ex, $"Error adding review for product {reviewCreateDto.ProductId}.");
+                throw;
             }
-
-            var review = new Review
-            {
-                ProductId = reviewCreateDto.ProductId,
-                UserId = userId,
-                Rating = reviewCreateDto.Rating,
-                Comment = reviewCreateDto.Comment,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            await _context.Reviews.AddAsync(review);
-            await _context.SaveChangesAsync();
-
-            return new ReviewResponseDto
-            {
-                Id = review.Id,
-                Rating = review.Rating,
-                Comment = review.Comment,
-                UserId = review.UserId,
-                UserName = user.FirstName + " " + user.LastName,
-                CreatedAt = review.CreatedAt
-            };
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error adding review for product {reviewCreateDto.ProductId}.");
-            throw;
-        }
-    }
         public async Task<ProductResponseDto?> GetProductByIdAsync(long id)
         {
             try
@@ -264,7 +264,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                     }).ToList() ?? new List<CategoryResponseDto>(),
                     CreatedAt = product.CreatedAt,
                     UpdatedAt = product.UpdatedAt,
-                    
+
                     // Populate the new review properties
                     AverageRating = averageRating,
                     Reviews = product.Reviews?.Select(r => new ReviewResponseDto
@@ -614,6 +614,190 @@ namespace BackEnd_FLOWER_SHOP.Services
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt
             };
+        }
+
+        public async Task TrackProductViewAsync(long userId, long productId)
+        {
+            try
+            {
+                var existingView = await _context.UserProductViews
+                    .FirstOrDefaultAsync(v => v.UserId == userId && v.ProductId == productId);
+
+                if (existingView != null)
+                {
+                    existingView.ViewCount++;
+                    existingView.ViewedAt = DateTime.UtcNow;
+                    _logger.LogInformation($"Saved {existingView.ViewCount} changes to database");
+                }
+                else
+                {
+                    var newView = new UserProductView
+                    {
+                        UserId = userId,
+                        ProductId = productId,
+                        ViewedAt = DateTime.UtcNow,
+                        ViewCount = 1
+                    };
+                    _context.UserProductViews.Add(newView);
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error tracking view for user {userId}, product {productId}");
+            }
+        }
+
+        public async Task<List<ProductSummaryDto>> GetRecommendationsForUserAsync(long userId, int count = 6)
+        {
+            try
+            {
+                // Get user's viewed categories
+                var userCategories = await _context.UserProductViews
+                    .Where(v => v.UserId == userId)
+                    .Include(v => v.Product)
+                    .ThenInclude(p => p.ProductCategories)
+                    .SelectMany(v => v.Product.ProductCategories.Select(pc => pc.CategoryId))
+                    .Distinct()
+                    .ToListAsync();
+
+                if (!userCategories.Any())
+                {
+                    return await GetPopularProductsAsync(count);
+                }
+
+                // Get viewed product IDs
+                var viewedProductIds = await _context.UserProductViews
+                    .Where(v => v.UserId == userId)
+                    .Select(v => v.ProductId)
+                    .ToListAsync();
+
+                // Get products from user's preferred categories
+                var recommendedProducts = await _context.Products
+                    .Where(p => p.IsActive && !viewedProductIds.Contains(p.Id))
+                    .Where(p => userCategories.Any(catId => p.ProductCategories.Any(pc => pc.CategoryId == catId)))
+                    .Include(p => p.ImageUploads)
+                    .Include(p => p.ProductCategories)
+                    .ThenInclude(pc => pc.Category)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(count)
+                    .ToListAsync();
+
+                // Fill with popular if needed
+                if (recommendedProducts.Count < count)
+                {
+                    var additionalProducts = await GetPopularProductsQuery()
+                        .Where(p => !viewedProductIds.Contains(p.Id) &&
+                                   !recommendedProducts.Select(rp => rp.Id).Contains(p.Id))
+                        .Take(count - recommendedProducts.Count)
+                        .ToListAsync();
+
+                    recommendedProducts.AddRange(additionalProducts);
+                }
+
+                return recommendedProducts.Select(MapToProductSummaryDto).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting recommendations for user {userId}");
+                return await GetPopularProductsAsync(count);
+            }
+        }
+
+        public async Task<List<ProductSummaryDto>> GetPopularProductsAsync(int count = 6)
+        {
+            try
+            {
+                var popularProducts = await GetPopularProductsQuery()
+                    .Take(count)
+                    .ToListAsync();
+
+                return popularProducts.Select(MapToProductSummaryDto).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting popular products");
+                return new List<ProductSummaryDto>();
+            }
+        }
+
+        public async Task<List<ProductSummaryDto>> GetSimilarProductsAsync(long productId, int count = 6)
+        {
+            try
+            {
+                var product = await _context.Products
+                    .Include(p => p.ProductCategories)
+                    .FirstOrDefaultAsync(p => p.Id == productId);
+
+                if (product == null) return new List<ProductSummaryDto>();
+
+                var categoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList();
+
+                var similarProducts = await _context.Products
+                    .Where(p => p.IsActive && p.Id != productId)
+                    .Where(p => categoryIds.Any(catId => p.ProductCategories.Any(pc => pc.CategoryId == catId)))
+                    .Include(p => p.ImageUploads)
+                    .Include(p => p.ProductCategories)
+                    .ThenInclude(pc => pc.Category)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(count)
+                    .ToListAsync();
+
+                return similarProducts.Select(MapToProductSummaryDto).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting similar products for {productId}");
+                return new List<ProductSummaryDto>();
+            }
+        }
+
+        public async Task<List<ProductSummaryDto>> GetRecentlyViewedAsync(long userId, int count = 6)
+        {
+            try
+            {
+                var recentlyViewed = await _context.UserProductViews
+                    .Where(v => v.UserId == userId)
+                    .Include(v => v.Product)
+                    .ThenInclude(p => p.ImageUploads)
+                    .Include(v => v.Product)
+                    .ThenInclude(p => p.ProductCategories)
+                    .ThenInclude(pc => pc.Category)
+                    .Where(v => v.Product.IsActive)
+                    .OrderByDescending(v => v.ViewedAt)
+                    .Take(count)
+                    .Select(v => v.Product)
+                    .ToListAsync();
+
+                return recentlyViewed.Select(MapToProductSummaryDto).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting recently viewed for user {userId}");
+                return new List<ProductSummaryDto>();
+            }
+        }
+
+        // === PRIVATE HELPER METHODS ===
+
+        private IQueryable<Product> GetPopularProductsQuery()
+        {
+            var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
+
+            return _context.Products
+                .Where(p => p.IsActive)
+                .Include(p => p.ImageUploads)
+                .Include(p => p.ProductCategories)
+                .ThenInclude(pc => pc.Category)
+                .GroupJoin(
+                    _context.UserProductViews.Where(v => v.ViewedAt >= thirtyDaysAgo),
+                    p => p.Id,
+                    v => v.ProductId,
+                    (product, views) => new { Product = product, ViewCount = views.Sum(v => v.ViewCount) })
+                .OrderByDescending(x => x.ViewCount)
+                .ThenByDescending(x => x.Product.CreatedAt)
+                .Select(x => x.Product);
         }
     }
 }
