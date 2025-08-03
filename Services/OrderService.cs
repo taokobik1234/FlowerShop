@@ -147,14 +147,14 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 UserId = order.UserId,
                 UserName = user?.UserName,
                 Address = new AddressDTO
-{
-    Id = address.Id,
-    FullName = address.FullName,
-    PhoneNumber = address.PhoneNumber,
-    StreetAddress = address.StreetAddress,
-    City = address.City,
-    ApplicationUserId = address.ApplicationUserId
-},
+                {
+                    Id = address.Id,
+                    FullName = address.FullName,
+                    PhoneNumber = address.PhoneNumber,
+                    StreetAddress = address.StreetAddress,
+                    City = address.City,
+                    ApplicationUserId = address.ApplicationUserId
+                },
                 TrackingNumber = order.TrackingNumber,
                 OrderStatus = order.OrderStatus,
                 Sum = order.Sum,
@@ -313,6 +313,8 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
         /// <returns>The mapped OrderDto.</returns>
         private OrderDto MapOrderToDto(Entities.Order order)
         {
+            var calculatedSum = order.OrderItems?.Sum(oi => (decimal)oi.Price * oi.Quantity) ?? 0;
+
             return new OrderDto
             {
                 Id = order.Id,
@@ -329,7 +331,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 } : null,
                 TrackingNumber = order.TrackingNumber,
                 OrderStatus = order.OrderStatus,
-                Sum = order.Sum,
+                Sum = calculatedSum, // Use the dynamically calculated sum here
                 CreatedAt = order.CreatedAt,
                 UpdatedAt = order.UpdatedAt,
                 PaymentMethod = order.PaymentMethod,
