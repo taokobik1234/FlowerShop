@@ -147,14 +147,14 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 UserId = order.UserId,
                 UserName = user?.UserName,
                 Address = new AddressDTO
-{
-    Id = address.Id,
-    FullName = address.FullName,
-    PhoneNumber = address.PhoneNumber,
-    StreetAddress = address.StreetAddress,
-    City = address.City,
-    ApplicationUserId = address.ApplicationUserId
-},
+                {
+                    Id = address.Id,
+                    FullName = address.FullName,
+                    PhoneNumber = address.PhoneNumber,
+                    StreetAddress = address.StreetAddress,
+                    City = address.City,
+                    ApplicationUserId = address.ApplicationUserId
+                },
                 TrackingNumber = order.TrackingNumber,
                 OrderStatus = order.OrderStatus,
                 Sum = order.Sum,
@@ -172,7 +172,6 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                         BasePrice = oi.Product.BasePrice,
                         Description = oi.Product.Description,
                         FlowerStatus = oi.Product.flowerstatus,
-                        Condition = oi.Product.Condition,
                         Images = oi.Product.ImageUploads?.Select(iu => new ImageResponseDto
                         {
                             Id = iu.Id,
@@ -344,7 +343,6 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                         BasePrice = oi.Product.BasePrice,
                         Description = oi.Product.Description,
                         FlowerStatus = oi.Product.flowerstatus,
-                        Condition = oi.Product.Condition,
                         Images = oi.Product.ImageUploads?.Select(iu => new ImageResponseDto
                         {
                             Id = iu.Id,

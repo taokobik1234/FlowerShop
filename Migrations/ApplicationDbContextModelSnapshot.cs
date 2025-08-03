@@ -99,18 +99,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "1c21a206-3553-442f-9268-b03a8b595787",
-                            CreationDate = new DateTime(2025, 8, 3, 4, 13, 13, 447, DateTimeKind.Utc).AddTicks(2974),
-                            ModificationDate = new DateTime(2025, 8, 3, 4, 13, 13, 447, DateTimeKind.Utc).AddTicks(2975),
+                            ConcurrencyStamp = "d6c8de5d-71a8-4eef-8b9b-8f924375bb32",
+                            CreationDate = new DateTime(2025, 8, 3, 11, 46, 7, 852, DateTimeKind.Utc).AddTicks(1920),
+                            ModificationDate = new DateTime(2025, 8, 3, 11, 46, 7, 852, DateTimeKind.Utc).AddTicks(1921),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "50670c34-a6c5-456d-a44a-f1881335d69d",
-                            CreationDate = new DateTime(2025, 8, 3, 4, 13, 13, 447, DateTimeKind.Utc).AddTicks(3044),
-                            ModificationDate = new DateTime(2025, 8, 3, 4, 13, 13, 447, DateTimeKind.Utc).AddTicks(3044),
+                            ConcurrencyStamp = "8ae4423c-b037-4cd1-b335-3940d438b9a0",
+                            CreationDate = new DateTime(2025, 8, 3, 11, 46, 7, 852, DateTimeKind.Utc).AddTicks(2000),
+                            ModificationDate = new DateTime(2025, 8, 3, 11, 46, 7, 852, DateTimeKind.Utc).AddTicks(2001),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -505,10 +505,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("PricingRuleId"));
 
-                    b.Property<string>("Condition")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -527,6 +523,10 @@ namespace BackEnd_FLOWER_SHOP.Migrations
 
                     b.Property<decimal?>("FixedPrice")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("FlowerStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<bool>("IsGlobal")
                         .HasColumnType("boolean");
@@ -562,11 +562,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
 
                     b.Property<decimal>("BasePrice")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Condition")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()

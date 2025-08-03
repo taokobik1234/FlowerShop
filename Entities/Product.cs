@@ -16,14 +16,13 @@ namespace BackEnd_FLOWER_SHOP.Entities
             ProductPricingRules = new List<ProductPricingRule>();
 
         }
-        
+
         public ICollection<Review> Reviews { get; set; }
         public long Id { get; set; }
         public string Name { get; set; }
         public FlowerStatus flowerstatus { get; set; }
         public string Description { get; set; }
         public decimal BasePrice { get; set; }
-        public string Condition { get; set; }
         public long StockQuantity { get; set; }
         public bool IsActive { get; set; }
         public ICollection<ProductCategory> ProductCategories { get; set; }

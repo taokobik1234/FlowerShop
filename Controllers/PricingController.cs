@@ -57,7 +57,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                     DynamicPrice = dynamicPrice,
                     Discount = product.BasePrice - dynamicPrice,
                     DiscountPercentage = product.BasePrice > 0 ? ((product.BasePrice - dynamicPrice) / product.BasePrice) * 100 : 0,
-                    AppliedRule = applicableRules.OrderByDescending(r => r.Priority).FirstOrDefault()?.Condition,
+                    AppliedRule = applicableRules.OrderByDescending(r => r.Priority).FirstOrDefault()?.Description,
                     CalculatedAt = checkTime
                 };
 

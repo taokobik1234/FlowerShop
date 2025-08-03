@@ -12,11 +12,10 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.Product
         public int PageSize { get; set; } = 10;
 
         // Filtering
-        public List<FlowerStatus>? FlowerTypes { get; set; }
+        public List<FlowerStatus>? FlowerStatuses { get; set; }
         public List<string>? Occasions { get; set; }
         public decimal? MinPrice { get; set; }
         public decimal? MaxPrice { get; set; }
-        public List<string>? Conditions { get; set; }
         public List<long>? CategoryIds { get; set; }
         public bool? IsActive { get; set; } = true;
         public string? SearchTerm { get; set; }

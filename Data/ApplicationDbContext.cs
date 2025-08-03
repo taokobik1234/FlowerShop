@@ -143,8 +143,6 @@ namespace BackEnd_FLOWER_SHOP.Data
                         .HasColumnType("decimal(18,2)")
                         .IsRequired();
 
-                        entity.Property(p => p.Condition)
-                        .HasMaxLength(100);
 
                         entity.Property(p => p.StockQuantity)
                         .IsRequired();
@@ -470,9 +468,10 @@ namespace BackEnd_FLOWER_SHOP.Data
 
                         entity.HasKey(pr => pr.PricingRuleId);
 
-                        entity.Property(pr => pr.Condition)
-                        .IsRequired(false)
-                        .HasMaxLength(200);
+                        entity.Property(pr => pr.FlowerStatus) // Changed from Condition
+            .HasConversion<string>() // Convert enum to string for database
+            .IsRequired(false)
+            .HasMaxLength(50);
 
                         entity.Property(pr => pr.Description)
                         .HasMaxLength(500);

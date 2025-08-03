@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BackEnd_FLOWER_SHOP.Enums;
 
 namespace BackEnd_FLOWER_SHOP.DTOs.Response.PricingRule
 {
@@ -9,7 +10,7 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.PricingRule
     {
         public long PricingRuleId { get; set; }
         public string? Description { get; set; }
-        public string? Condition { get; set; }
+        public FlowerStatus? flowerstatus { get; set; }
         public string? SpecialDay { get; set; }
         public TimeSpan? StartTime { get; set; }
         public TimeSpan? EndTime { get; set; }
