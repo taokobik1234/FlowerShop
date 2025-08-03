@@ -19,11 +19,9 @@ namespace BackEnd_FLOWER_SHOP.Entities
         public decimal? FixedPrice { get; set; }
         public int Priority { get; set; }
         public DateTime CreatedAt { get; set; }
-        public long CreatedBy { get; set; }
         public bool IsGlobal { get; set; } // True if applies to all products
 
         // Many-to-many relationship with Product
         public virtual ICollection<ProductPricingRule> ProductPricingRules { get; set; } = new List<ProductPricingRule>();
-        public virtual ApplicationUser CreatedByUser { get; set; }
     }
 }

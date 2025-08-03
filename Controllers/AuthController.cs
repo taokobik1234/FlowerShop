@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using BackEnd_FLOWER_SHOP.DTOs.Request;
+using BackEnd_FLOWER_SHOP.DTOs.Request.Token;
 using BackEnd_FLOWER_SHOP.DTOs.Request.User;
 using BackEnd_FLOWER_SHOP.DTOs.Response.User;
 using BackEnd_FLOWER_SHOP.Entities;
@@ -22,13 +23,13 @@ namespace BackEnd_FLOWER_SHOP.Controllers
     {
         private readonly IUserService _userService;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IConfiguration _configuration;
-        public AuthController(IUserService usersService, UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+        private readonly ITokenService _itokenService;
+        public AuthController(IUserService usersService,
+            SignInManager<ApplicationUser> signInManager, ITokenService tokenService)
         {
             _userService = usersService;
             _signInManager = signInManager;
-            _configuration = configuration;
+            _itokenService = tokenService;
         }
 
         [HttpPost("register")]
@@ -118,14 +119,16 @@ namespace BackEnd_FLOWER_SHOP.Controllers
 
             if (result.Succeeded)
             {
-                var token = await GenerateJwtToken(user);
+                var token = await _itokenService.GenerateJwtToken(user);
+                var refreshToken = await _itokenService.GenerateRefreshTokenAsync();
                 var roles = await _userService.GetRoleAsync(user);
-
+                await _itokenService.SaveRefreshTokenAsync(user, refreshToken);
                 return Ok(new LoginResponseDto
                 {
                     Success = true,
                     Message = "Login successful",
                     Token = token,
+                    RefreshToken = refreshToken,
                     User = new UserInfoDto
                     {
                         Id = user.Id,
@@ -146,41 +149,120 @@ namespace BackEnd_FLOWER_SHOP.Controllers
             }
         }
 
-        private async Task<string> GenerateJwtToken(ApplicationUser user)
+        [HttpPost("refresh-token")]
+        [AllowAnonymous]
+        public async Task<ActionResult<RefreshTokenResponseDto>> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
-            var role = await _userService.GetRoleAsync(user);
-            var claims = new List<Claim>
+            if (!ModelState.IsValid)
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(ClaimTypes.Email, user.Email),
-
-            };
-
-            if (!string.IsNullOrEmpty(role))
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
+                return BadRequest(new RefreshTokenResponseDto
+                {
+                    Success = false,
+                    Message = "Invalid input data",
+                    Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()
+                });
             }
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var token = new JwtSecurityToken(
-                issuer: _configuration["JWT:ValidIssuer"],
-                audience: _configuration["JWT:ValidAudience"],
-                claims: claims,
-                expires: DateTime.Now.AddDays(Convert.ToDouble(_configuration["JWT:TokenValidityInDays"])),
-                signingCredentials: creds
-            );
+            try
+            {
+                // Get principal from expired token
+                var principal = _itokenService.GetPrincipalFromExpiredToken(request.AccessToken);
+                var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new RefreshTokenResponseDto
+                    {
+                        Success = false,
+                        Message = "Invalid token",
+                        Errors = new List<string> { "User ID not found in token" }
+                    });
+                }
+
+                // Get user by refresh token
+                var user = await _itokenService.GetUserByRefreshTokenAsync(request.RefreshToken);
+
+                if (user == null || user.Id.ToString() != userId)
+                {
+                    return Unauthorized(new RefreshTokenResponseDto
+                    {
+                        Success = false,
+                        Message = "Invalid refresh token",
+                        Errors = new List<string> { "Refresh token is invalid or expired" }
+                    });
+                }
+
+                // Generate new tokens
+                var newAccessToken = await _itokenService.GenerateJwtToken(user);
+                var newRefreshToken = await _itokenService.GenerateRefreshTokenAsync();
+
+                // Save new refresh token
+                var saveResult = await _itokenService.SaveRefreshTokenAsync(user, newRefreshToken);
+
+                if (!saveResult.Succeeded)
+                {
+                    return StatusCode(500, new RefreshTokenResponseDto
+                    {
+                        Success = false,
+                        Message = "Failed to save refresh token",
+                        Errors = saveResult.Errors.Select(e => e.Description).ToList()
+                    });
+                }
+
+                return Ok(new RefreshTokenResponseDto
+                {
+                    Success = true,
+                    Message = "Token refreshed successfully",
+                    AccessToken = newAccessToken,
+                    RefreshToken = newRefreshToken
+                });
+            }
+            catch (SecurityTokenException)
+            {
+                return Unauthorized(new RefreshTokenResponseDto
+                {
+                    Success = false,
+                    Message = "Invalid access token",
+                    Errors = new List<string> { "Access token is invalid" }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new RefreshTokenResponseDto
+                {
+                    Success = false,
+                    Message = "An error occurred while refreshing token",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
         }
 
-        [HttpGet]
-        [Authorize] // This route requires a valid JWT token
-        [Authorize(Roles = "User")]
-        public IActionResult GetProfile()
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
         {
-            return Ok(new { message = "This is a protected route." });
+
+            try
+            {
+                await _signInManager.SignOutAsync();
+
+                return Ok(new ApiResponse
+                {
+                    Success = true,
+                    Message = "Logout successful"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse
+                {
+                    Success = false,
+                    Message = "An error occurred during logout",
+                    Errors = new List<string> { ex.Message }
+                });
+            }
         }
+
+
     }
 }
