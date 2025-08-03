@@ -312,6 +312,8 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
         /// <returns>The mapped OrderDto.</returns>
         private OrderDto MapOrderToDto(Entities.Order order)
         {
+            var calculatedSum = order.OrderItems?.Sum(oi => (decimal)oi.Price * oi.Quantity) ?? 0;
+
             return new OrderDto
             {
                 Id = order.Id,
@@ -328,7 +330,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
                 } : null,
                 TrackingNumber = order.TrackingNumber,
                 OrderStatus = order.OrderStatus,
-                Sum = order.Sum,
+                Sum = calculatedSum, // Use the dynamically calculated sum here
                 CreatedAt = order.CreatedAt,
                 UpdatedAt = order.UpdatedAt,
                 PaymentMethod = order.PaymentMethod,
