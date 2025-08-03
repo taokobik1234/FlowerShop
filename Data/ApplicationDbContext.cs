@@ -400,31 +400,31 @@ namespace BackEnd_FLOWER_SHOP.Data
 
                   // ==================== ADDRESS CONFIGURATION ====================
 
-builder.Entity<Address>(entity =>
-{
-    entity.ToTable("Addresses");
+                  builder.Entity<Address>(entity =>
+                  {
+                        entity.ToTable("Addresses");
 
-    entity.Property(a => a.FullName)
-        .HasMaxLength(100)
-        .IsRequired();
+                        entity.Property(a => a.FullName)
+          .HasMaxLength(100)
+          .IsRequired();
 
-    entity.Property(a => a.PhoneNumber)
-        .HasMaxLength(20) // Adjust max length as needed
-        .IsRequired();
+                        entity.Property(a => a.PhoneNumber)
+          .HasMaxLength(20) // Adjust max length as needed
+          .IsRequired();
 
-    entity.Property(a => a.StreetAddress)
-        .HasMaxLength(200)
-        .IsRequired();
+                        entity.Property(a => a.StreetAddress)
+          .HasMaxLength(200)
+          .IsRequired();
 
-    entity.Property(a => a.City)
-        .HasMaxLength(100)
-        .IsRequired();
+                        entity.Property(a => a.City)
+          .HasMaxLength(100)
+          .IsRequired();
 
-    entity.HasOne(a => a.User)
-        .WithMany(u => u.Addresses)
-        .HasForeignKey(a => a.ApplicationUserId)
-        .OnDelete(DeleteBehavior.Cascade);
-});
+                        entity.HasOne(a => a.User)
+          .WithMany(u => u.Addresses)
+          .HasForeignKey(a => a.ApplicationUserId)
+          .OnDelete(DeleteBehavior.Cascade);
+                  });
 
                   // ==================== IMAGE UPLOAD CONFIGURATION ====================
 
@@ -493,13 +493,6 @@ builder.Entity<Address>(entity =>
 
                         entity.Property(pr => pr.CreatedAt)
                         .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
-
-
-                        entity.HasOne(pr => pr.CreatedByUser)
-                        .WithMany()
-                        .HasForeignKey(pr => pr.CreatedBy)
-                        .OnDelete(DeleteBehavior.Restrict);
-
 
                   });
 

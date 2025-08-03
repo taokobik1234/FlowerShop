@@ -207,7 +207,6 @@ namespace BackEnd_FLOWER_SHOP.Services
             var rule = await _context.PricingRules
                 .Include(r => r.ProductPricingRules)
                     .ThenInclude(ppr => ppr.Product)
-                .Include(r => r.CreatedByUser)
                 .FirstOrDefaultAsync(r => r.PricingRuleId == ruleId);
 
             if (rule == null)
@@ -255,7 +254,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                     FixedPrice = ruleDto.FixedPrice,
                     Priority = ruleDto.Priority,
                     CreatedAt = DateTime.UtcNow,
-                    CreatedBy = 1,
                     IsGlobal = ruleDto.IsGlobal
                 };
 
@@ -400,7 +398,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                     .Where(r => r.IsGlobal || r.ProductPricingRules.Any(ppr => ppr.ProductId == productId))
                     .Include(r => r.ProductPricingRules)
                         .ThenInclude(ppr => ppr.Product)
-                    .Include(r => r.CreatedByUser)
                     .ToListAsync();
 
                 return rules.Select(MapToResponseDto).ToList();
@@ -420,7 +417,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                 var rules = await _context.PricingRules
                     .Include(r => r.ProductPricingRules)
                         .ThenInclude(ppr => ppr.Product)
-                    .Include(r => r.CreatedByUser)
                     .OrderByDescending(r => r.CreatedAt)
                     .ToListAsync();
 
@@ -449,9 +445,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 FixedPrice = rule.FixedPrice,
                 Priority = rule.Priority,
                 CreatedAt = rule.CreatedAt,
-                CreatedBy = rule.CreatedBy,
                 IsGlobal = rule.IsGlobal,
-                CreatedByUserName = rule.CreatedByUser?.UserName,
 
             };
         }

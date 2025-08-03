@@ -38,30 +38,20 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Country")
+                    b.Property<string>("FullName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("FirstName")
+                    b.Property<string>("PhoneNumber")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("StreetAddress")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
-
-                    b.Property<string>("ZipCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -109,18 +99,18 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         new
                         {
                             Id = 1L,
-                            ConcurrencyStamp = "05c127b9-8886-4245-bc9c-4428ba5561a2",
-                            CreationDate = new DateTime(2025, 8, 2, 14, 24, 13, 867, DateTimeKind.Utc).AddTicks(6743),
-                            ModificationDate = new DateTime(2025, 8, 2, 14, 24, 13, 867, DateTimeKind.Utc).AddTicks(6744),
+                            ConcurrencyStamp = "1c21a206-3553-442f-9268-b03a8b595787",
+                            CreationDate = new DateTime(2025, 8, 3, 4, 13, 13, 447, DateTimeKind.Utc).AddTicks(2974),
+                            ModificationDate = new DateTime(2025, 8, 3, 4, 13, 13, 447, DateTimeKind.Utc).AddTicks(2975),
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = 2L,
-                            ConcurrencyStamp = "ae7a499a-de69-4f9b-b26d-cab68277f45e",
-                            CreationDate = new DateTime(2025, 8, 2, 14, 24, 13, 867, DateTimeKind.Utc).AddTicks(6820),
-                            ModificationDate = new DateTime(2025, 8, 2, 14, 24, 13, 867, DateTimeKind.Utc).AddTicks(6821),
+                            ConcurrencyStamp = "50670c34-a6c5-456d-a44a-f1881335d69d",
+                            CreationDate = new DateTime(2025, 8, 3, 4, 13, 13, 447, DateTimeKind.Utc).AddTicks(3044),
+                            ModificationDate = new DateTime(2025, 8, 3, 4, 13, 13, 447, DateTimeKind.Utc).AddTicks(3044),
                             Name = "User",
                             NormalizedName = "USER"
                         });
@@ -524,9 +514,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("NOW() AT TIME ZONE 'UTC'");
 
-                    b.Property<long>("CreatedBy")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -561,8 +548,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .HasColumnType("interval");
 
                     b.HasKey("PricingRuleId");
-
-                    b.HasIndex("CreatedBy");
 
                     b.ToTable("PricingRules", (string)null);
                 });
@@ -949,17 +934,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.PricingRule", b =>
-                {
-                    b.HasOne("BackEnd_FLOWER_SHOP.Entities.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("BackEnd_FLOWER_SHOP.Entities.ProductCategory", b =>
