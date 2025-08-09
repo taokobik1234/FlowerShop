@@ -505,10 +505,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("PricingRuleId"));
 
-                    b.Property<string>("Condition")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -527,6 +523,10 @@ namespace BackEnd_FLOWER_SHOP.Migrations
 
                     b.Property<decimal?>("FixedPrice")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("FlowerStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<bool>("IsGlobal")
                         .HasColumnType("boolean");
@@ -562,11 +562,6 @@ namespace BackEnd_FLOWER_SHOP.Migrations
 
                     b.Property<decimal>("BasePrice")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Condition")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime?>("CreatedAt")
                         .ValueGeneratedOnAdd()

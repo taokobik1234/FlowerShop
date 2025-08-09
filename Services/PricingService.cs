@@ -6,6 +6,7 @@ using BackEnd_FLOWER_SHOP.Data;
 using BackEnd_FLOWER_SHOP.DTOs.Request.PricingRule;
 using BackEnd_FLOWER_SHOP.DTOs.Response.PricingRule;
 using BackEnd_FLOWER_SHOP.Entities;
+using BackEnd_FLOWER_SHOP.Enums;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -130,11 +131,11 @@ namespace BackEnd_FLOWER_SHOP.Services
             }
 
             // Check product condition
-            if (!string.IsNullOrEmpty(rule.Condition))
+            if (rule.FlowerStatus.HasValue)
             {
-                if (!IsConditionMet(rule.Condition, productId, requestTime))
+                if (!IsFlowerStatusMet(rule.FlowerStatus.Value, productId, requestTime))
                 {
-                    _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable - condition not met");
+                    _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable - flower status condition not met");
                     return false;
                 }
             }
@@ -185,33 +186,32 @@ namespace BackEnd_FLOWER_SHOP.Services
             return firstWeekday.AddDays((occurrence - 1) * 7);
         }
 
-        private bool IsConditionMet(string condition, long productId, DateTime requestTime)
+        private bool IsFlowerStatusMet(FlowerStatus requiredStatus, long productId, DateTime requestTime)
         {
-            // Implement your business logic for product conditions
-            switch (condition.ToLower())
+            var product = _context.Products.FirstOrDefault(p => p.Id == productId);
+            if (product == null) return false;
+
+            // Direct status match
+            if (product.flowerstatus == requiredStatus)
+                return true;
+
+            // Dynamic status evaluation based on business logic
+            switch (requiredStatus)
             {
-                case "new":
-                    // Check if product was created within last 30 days
-                    var product = _context.Products.FirstOrDefault(p => p.Id == productId);
-                    return product?.CreatedAt >= requestTime.AddDays(-30);
+                case FlowerStatus.NewFlower:
+                    // Check if product was created within last 7 days
+                    return product.CreatedAt >= requestTime.AddDays(-7);
 
-                case "old":
-                    // Check if product is older than 30 days
-                    var oldProduct = _context.Products.FirstOrDefault(p => p.Id == productId);
-                    return oldProduct?.CreatedAt < requestTime.AddDays(-30);
+                case FlowerStatus.OldFlower:
+                    // Check if product is older than 7 days
+                    return product.CreatedAt < requestTime.AddDays(-7);
 
-                case "low_stock":
+                case FlowerStatus.LowStock:
                     // Check if stock is below certain threshold
-                    var stockProduct = _context.Products.FirstOrDefault(p => p.Id == productId);
-                    return stockProduct?.StockQuantity < 10; // Adjust threshold as needed
-
-                case "high_demand":
-                    // This could be based on order history, views, etc.
-                    // Implement based on your tracking mechanism
-                    return false;
+                    return product.StockQuantity < 10;
 
                 default:
-                    return true;
+                    return product.flowerstatus == requiredStatus;
             }
         }
 
@@ -253,7 +253,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 var rule = new PricingRule
                 {
                     Description = ruleDto.Description,
-                    Condition = ruleDto.Condition,
+                    FlowerStatus = ruleDto.flowerstatus,
                     SpecialDay = ruleDto.SpecialDay,
                     StartTime = ruleDto.StartTime,
                     EndTime = ruleDto.EndTime,
@@ -329,7 +329,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 }
 
                 // Update rule properties
-                rule.Condition = ruleDto.Condition;
+                rule.FlowerStatus = ruleDto.flowerstatus;
                 rule.Description = ruleDto.Description;
                 rule.SpecialDay = ruleDto.SpecialDay;
                 rule.StartTime = ruleDto.StartTime;
@@ -447,7 +447,7 @@ namespace BackEnd_FLOWER_SHOP.Services
             return new PricingRuleResponseDto
             {
                 PricingRuleId = rule.PricingRuleId,
-                Condition = rule.Condition,
+                flowerstatus = rule.FlowerStatus,
                 Description = rule.Description,
                 SpecialDay = rule.SpecialDay,
                 StartTime = rule.StartTime,

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using BackEnd_FLOWER_SHOP.Enums;
 
 namespace BackEnd_FLOWER_SHOP.DTOs.Request.PricingRule
 {
@@ -11,7 +12,7 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Request.PricingRule
         [Required]
         public string Description { get; set; }
         [StringLength(100)]
-        public string? Condition { get; set; } // "new", "old", "low_stock", etc.
+        public FlowerStatus? flowerstatus { get; set; }
 
         [StringLength(50)]
         public string? SpecialDay { get; set; } // "valentine", "womens_day", "weekend", etc.

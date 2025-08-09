@@ -53,7 +53,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                     flowerstatus = productDto.FlowerStatus,
                     Description = productDto.Description,
                     BasePrice = productDto.BasePrice,
-                    Condition = productDto.Condition,
                     StockQuantity = productDto.StockQuantity,
                     IsActive = productDto.IsActive,
                     CreatedAt = DateTime.UtcNow,
@@ -107,7 +106,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                     FlowerStatus = product.flowerstatus,
                     Description = product.Description,
                     BasePrice = product.BasePrice,
-                    Condition = product.Condition,
                     StockQuantity = product.StockQuantity,
                     IsActive = product.IsActive,
                     Images = imageUploads.Select(img => new ImageResponseDto
@@ -248,7 +246,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                     FlowerStatus = product.flowerstatus,
                     Description = product.Description,
                     BasePrice = product.BasePrice,
-                    Condition = product.Condition,
                     StockQuantity = product.StockQuantity,
                     IsActive = product.IsActive,
                     Images = product.ImageUploads?.Select(img => new ImageResponseDto
@@ -316,7 +313,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 product.flowerstatus = productDto.FlowerStatus;
                 product.Description = productDto.Description;
                 product.BasePrice = productDto.BasePrice;
-                product.Condition = productDto.Condition;
+                product.flowerstatus = productDto.FlowerStatus;
                 product.StockQuantity = productDto.StockQuantity;
                 product.IsActive = productDto.IsActive;
                 product.UpdatedAt = DateTime.UtcNow;
@@ -364,7 +361,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                     FlowerStatus = product.flowerstatus,
                     Description = product.Description,
                     BasePrice = product.BasePrice,
-                    Condition = product.Condition,
                     StockQuantity = product.StockQuantity,
                     IsActive = product.IsActive,
                     Images = product.ImageUploads.Select(img => new ImageResponseDto
@@ -520,9 +516,9 @@ namespace BackEnd_FLOWER_SHOP.Services
             }
 
             // Filter by flower types
-            if (request.FlowerTypes?.Any() == true)
+            if (request.FlowerStatuses?.Any() == true)
             {
-                query = query.Where(p => request.FlowerTypes.Contains(p.flowerstatus));
+                query = query.Where(p => request.FlowerStatuses.Contains(p.flowerstatus));
             }
 
             // Filter by price range
@@ -535,11 +531,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                 query = query.Where(p => p.BasePrice <= request.MaxPrice.Value);
             }
 
-            // Filter by conditions
-            if (request.Conditions?.Any() == true)
-            {
-                query = query.Where(p => request.Conditions.Contains(p.Condition));
-            }
 
             // Filter by categories
             if (request.CategoryIds?.Any() == true)
@@ -602,7 +593,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                 Description = product.Description,
                 BasePrice = product.BasePrice,
                 CurrentPrice = product.BasePrice, // You'll need to implement pricing rule logic
-                Condition = product.Condition,
                 StockQuantity = product.StockQuantity,
                 IsActive = product.IsActive,
                 ImageUrls = product.ImageUploads?.Select(img => img.ImageUrl).ToList() ?? new List<string>(),
@@ -851,6 +841,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                 .ThenByDescending(x => x.Product.CreatedAt)
                 .Select(x => x.Product);
         }
-        
+
     }
 }

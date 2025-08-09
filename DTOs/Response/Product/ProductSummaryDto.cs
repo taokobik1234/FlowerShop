@@ -15,7 +15,6 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.Product
         public string Description { get; set; }
         public decimal BasePrice { get; set; }
         public decimal CurrentPrice { get; set; } // Price after applying pricing rules
-        public string Condition { get; set; }
         public long StockQuantity { get; set; }
         public bool IsActive { get; set; }
         public List<string> ImageUrls { get; set; } = new List<string>();
