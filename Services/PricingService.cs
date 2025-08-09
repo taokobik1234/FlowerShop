@@ -94,21 +94,29 @@ namespace BackEnd_FLOWER_SHOP.Services
         private bool IsRuleApplicable(PricingRule rule, long productId, DateTime requestTime)
         {
             // Check date range
-            _logger.LogInformation($"Rule {requestTime.Date} not applicable - not startday");
             if (rule.StartDate.HasValue && requestTime.Date < rule.StartDate.Value.Date)
+            {
+                _logger.LogInformation($"Rule {requestTime.Date} not applicable - not startday");
                 return false;
+            }
 
-            _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable - not end");
-            if (rule.EndDate.HasValue && requestTime.Date > rule.EndDate.Value.Date)
+            if (rule.EndDate.HasValue && requestTime.Date > rule.EndDate.Value.Date) {
+                _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable - not end");
                 return false;
+            }
 
             // Check time range
-            if (rule.StartTime.HasValue && rule.EndTime.HasValue)
+            if (rule.StartTime.HasValue && rule.EndTime.HasValue && rule.StartDate.HasValue && rule.EndDate.HasValue)
             {
-                _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable - not time");
-                var currentTime = requestTime.TimeOfDay;
-                if (currentTime < rule.StartTime.Value || currentTime > rule.EndTime.Value)
+                var currentTime = requestTime.Date.Add(requestTime.TimeOfDay);
+                var startTime = rule.StartDate.Value.Date.Add(rule.StartTime.Value);
+                var endTime = rule.EndDate.Value.Date.Add(rule.EndTime.Value);
+                _logger.LogInformation("Time: {CurrentTime}", currentTime);
+                if (currentTime < startTime || currentTime > endTime)
+                {
+                    _logger.LogInformation("Rule {PricingRuleId} not applicable - not time", rule.PricingRuleId);
                     return false;
+                }
             }
 
             // Check special days
@@ -125,9 +133,14 @@ namespace BackEnd_FLOWER_SHOP.Services
             if (!string.IsNullOrEmpty(rule.Condition))
             {
                 if (!IsConditionMet(rule.Condition, productId, requestTime))
+                {
+                    _logger.LogInformation($"Rule {rule.PricingRuleId} not applicable - condition not met");
                     return false;
+                }
             }
 
+            // If all checks passed, the rule is applicable
+            _logger.LogInformation($"Rule {rule.PricingRuleId} is applicable");
             return true;
         }
 
@@ -446,7 +459,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 Priority = rule.Priority,
                 CreatedAt = rule.CreatedAt,
                 IsGlobal = rule.IsGlobal,
-
+                ProductIds = rule.ProductPricingRules?.Select(ppr => ppr.ProductId).ToList() ?? new List<long>()
             };
         }
     }

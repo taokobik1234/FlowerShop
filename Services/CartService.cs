@@ -13,11 +13,13 @@ namespace BackEnd_FLOWER_SHOP.Services
 {
     public class CartService : ICartService
     {
-        private readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _context;
+    private readonly IPricingService _pricingService;
 
-        public CartService(ApplicationDbContext context)
+        public CartService(ApplicationDbContext context, IPricingService pricingService)
         {
             _context = context;
+            _pricingService = pricingService;
         }
 
         public async Task<CartResponseDto> GetCartByUserIdAsync(long userId)
@@ -200,24 +202,36 @@ namespace BackEnd_FLOWER_SHOP.Services
 
         private CartResponseDto MapToCartResponseDto(Cart cart)
         {
-            return new CartResponseDto
+            var cartItems = new List<CartItemResponseDto>();
+            foreach (var ci in cart.CartItems)
             {
-                Id = cart.Id,
-                UserId = cart.UserId,
-                UserName = cart.User?.UserName ?? "",
-                CartItems = cart.CartItems.Select(ci => new CartItemResponseDto
+                decimal price = ci.Price;
+                if (_pricingService != null && ci.Product != null)
+                {
+                    // Calculate dynamic price for each product in the cart
+                    price = _pricingService.CalculateDynamicPriceAsync(ci.ProductId).GetAwaiter().GetResult();
+                }
+                cartItems.Add(new CartItemResponseDto
                 {
                     Id = ci.Id,
                     CartId = ci.CartId,
                     ProductId = ci.ProductId,
                     ProductName = ci.Product?.Name ?? "",
-                    Price = ci.Price,
+                    BasePrice = ci.Price,
+                    Price = price,
                     Quantity = ci.Quantity,
-                    SubTotal = ci.Price * ci.Quantity,
+                    SubTotal = price * ci.Quantity,
                     ProductImage = ci.Product?.ImageUploads?.FirstOrDefault()?.ImageUrl ?? ""
-                }).ToList(),
-                TotalAmount = cart.CartItems.Sum(ci => ci.Price * ci.Quantity),
-                TotalItems = (int)cart.CartItems.Sum(ci => ci.Quantity)
+                });
+            }
+            return new CartResponseDto
+            {
+                Id = cart.Id,
+                UserId = cart.UserId,
+                UserName = cart.User?.UserName ?? "",
+                CartItems = cartItems,
+                TotalAmount = cartItems.Sum(ci => ci.SubTotal),
+                TotalItems = (int)cartItems.Sum(ci => ci.Quantity)
             };
         }
     }

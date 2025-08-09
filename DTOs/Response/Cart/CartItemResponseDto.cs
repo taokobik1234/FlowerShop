@@ -10,10 +10,11 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.Cart
         public long Id { get; set; }
         public long CartId { get; set; }
         public long ProductId { get; set; }
-        public string ProductName { get; set; }
-        public decimal Price { get; set; }
+        public string? ProductName { get; set; }
+        public decimal BasePrice { get; set; }
         public long Quantity { get; set; }
         public decimal SubTotal { get; set; }
-        public string ProductImage { get; set; }
+        public string? ProductImage { get; set; }
+        public decimal Price { get; set; }
     }
 }

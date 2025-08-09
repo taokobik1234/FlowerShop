@@ -20,19 +20,22 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
     /// </summary>
     public class OrderService : IOrderService
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ILoyaltyService _loyaltyService; // New: Inject loyalty service
+    private readonly ApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ILoyaltyService _loyaltyService; // New: Inject loyalty service
+    private readonly IPricingService _pricingService;
 
         public OrderService(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            ILoyaltyService loyaltyService // New: Inject loyalty service
+            ILoyaltyService loyaltyService,
+            IPricingService pricingService
             )
         {
             _context = context;
             _userManager = userManager;
-            _loyaltyService = loyaltyService; // New: Assign loyalty service
+            _loyaltyService = loyaltyService;
+            _pricingService = pricingService;
         }
 
         /// <summary>
@@ -91,32 +94,29 @@ namespace BackEnd_FLOWER_SHOP.Services.Order
             foreach (var cartItem in cart.CartItems)
             {
                 var product = cartItem.Product;
-
                 if (product == null)
                 {
                     continue;
                 }
-
                 if (product.StockQuantity < cartItem.Quantity)
                 {
                     throw new ArgumentException($"Insufficient stock for product: {product.Name}. Available: {product.StockQuantity}, Requested: {cartItem.Quantity}");
                 }
-
+                // Get the correct dynamic price
+                decimal dynamicPrice = await _pricingService.CalculateDynamicPriceAsync(product.Id, DateTime.UtcNow);
                 var orderItem = new OrderItem
                 {
                     ProductId = product.Id,
                     Quantity = cartItem.Quantity,
-                    Price = (int)cartItem.Price,
+                    Price = dynamicPrice,
                     Name = product.Name,
                     UserId = userId
                 };
                 order.OrderItems.Add(orderItem);
-
                 // Decrement product stock
                 product.StockQuantity -= cartItem.Quantity;
                 _context.Products.Update(product);
-
-                totalSum += cartItem.Price * cartItem.Quantity;
+                totalSum += dynamicPrice * cartItem.Quantity;
             }
 
             order.Sum = totalSum;

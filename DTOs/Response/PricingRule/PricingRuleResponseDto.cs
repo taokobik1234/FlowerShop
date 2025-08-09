@@ -7,6 +7,7 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.PricingRule
 {
     public class PricingRuleResponseDto
     {
+        public List<long> ProductIds { get; set; } = new List<long>();
         public long PricingRuleId { get; set; }
         public string? Description { get; set; }
         public string? Condition { get; set; }

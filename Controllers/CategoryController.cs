@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace BackEnd_FLOWER_SHOP.Controllers
 {
     [Route("api/category")]
-    [Authorize(Roles = "Admin")]
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -54,6 +53,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<Category>> CreateCategory([FromBody] CategoryDto categoryDto)
         {
             try

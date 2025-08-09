@@ -13,7 +13,6 @@ namespace BackEnd_FLOWER_SHOP.Controllers
 {
     [ApiController]
     [Route("api/pricing")]
-    [Authorize(Roles = "Admin")]
     public class PricingController : ControllerBase
     {
         private readonly IPricingService _pricingService;
@@ -80,6 +79,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         [HttpPost("rules")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreatePricingRule([FromBody] PricingRuleCreateDto ruleDto)
         {
             try
@@ -215,6 +215,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         [HttpPut("rules/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdatePricingRule(long id, [FromBody] PricingRuleCreateDto ruleDto)
         {
             try
@@ -278,6 +279,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         }
 
         [HttpDelete("rules/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeletePricingRule(long id)
         {
             try
