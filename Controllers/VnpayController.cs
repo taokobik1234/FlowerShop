@@ -59,7 +59,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 }
             }
 
-            return NotFound("Không tìm thấy thông tin thanh toán.");
+            return NotFound("Not Found Payment infomation.");
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 }
             }
 
-            return NotFound("Không tìm thấy thông tin thanh toán.");
+            return NotFound("Not Found Payment infomation.");
         }
     }
 }

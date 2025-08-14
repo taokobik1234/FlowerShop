@@ -41,17 +41,17 @@ namespace BackEnd_FLOWER_SHOP.Services
 
             if (request.Amount < 5000 || request.Amount > 1000000000)
             {
-                throw new ArgumentException("Số tiền thanh toán phải nằm trong khoảng 5.000 (VND) đến 1.000.000.000 (VND).");
+                throw new ArgumentException("Payment amount must be between 5,000 (VND) and 1,000,000,000 (VND).");
             }
 
             if (string.IsNullOrEmpty(request.Description))
             {
-                throw new ArgumentException("Không được để trống mô tả giao dịch.");
+                throw new ArgumentException("Transaction description cannot be left blank.");
             }
 
             if (string.IsNullOrEmpty(request.IpAddress))
             {
-                throw new ArgumentException("Không được để trống địa chỉ IP.");
+                throw new ArgumentException("IP address cannot be left blank.");
             }
 
             var helper = new PaymentHelper();
@@ -97,7 +97,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 || string.IsNullOrEmpty(vnp_TxnRef)
                 || string.IsNullOrEmpty(vnp_SecureHash))
             {
-                throw new ArgumentException("Không đủ dữ liệu để xác thực giao dịch");
+                throw new ArgumentException("Not enough data to authenticate transaction");
             }
 
             var helper = new PaymentHelper();
@@ -120,7 +120,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                     && responseCode == ResponseCode.Code_00
                     && helper.IsSignatureCorrect(vnp_SecureHash, _hashSecret),
                 Description = vnp_OrderInfo,
-                PaymentMethod = string.IsNullOrEmpty(vnp_CardType) ? "Không xác định" : vnp_CardType,
+                PaymentMethod = string.IsNullOrEmpty(vnp_CardType) ? "Undefined" : vnp_CardType,
                 Timestamp = string.IsNullOrEmpty(vnp_PayDate)
                     ? DateTime.Now
                     : DateTime.ParseExact(vnp_PayDate, "yyyyMMddHHmmss", CultureInfo.InvariantCulture),
@@ -137,7 +137,7 @@ namespace BackEnd_FLOWER_SHOP.Services
                 BankingInfor = new BankingInfor
                 {
                     BankCode = vnp_BankCode,
-                    BankTransactionId = string.IsNullOrEmpty(vnp_BankTranNo) ? "Không xác định" : vnp_BankTranNo,
+                    BankTransactionId = string.IsNullOrEmpty(vnp_BankTranNo) ? "Undefined" : vnp_BankTranNo,
                 }
             };
         }
@@ -147,7 +147,7 @@ namespace BackEnd_FLOWER_SHOP.Services
             if (string.IsNullOrEmpty(_baseUrl) || string.IsNullOrEmpty(_tmnCode)
                 || string.IsNullOrEmpty(_hashSecret) || string.IsNullOrEmpty(_callbackUrl))
             {
-                throw new ArgumentException("Không tìm thấy BaseUrl, TmnCode, HashSecret, hoặc CallbackUrl");
+                throw new ArgumentException("Not Found BaseUrl, TmnCode, HashSecret, or CallbackUrl");
             }
         }
 

@@ -26,78 +26,91 @@ namespace BackEnd_FLOWER_SHOP.Services
 
         public async Task<PaymentResponse> CreatePaymentAsync(CreatePaymentRequest request, string ipAddress)
         {
-            // Validate order exists
-            var order = await _context.Orders
-                .Include(o => o.Payment)
-                .FirstOrDefaultAsync(o => o.Id == request.OrderId);
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            if (order == null)
-                throw new ArgumentException("Order not found");
-
-            if (order.Payment != null)
-                throw new InvalidOperationException("Order already has a payment");
-
-            var payment = new Payment
+            try
             {
-                OrderId = request.OrderId,
-                Method = request.Method,
-                Status = PaymentStatus.Pending,
-                Amount = request.Amount,
-                CreatedAt = DateTime.UtcNow,
-                PaymentDetails = "Text0",
-                UpdatedAt = DateTime.UtcNow
-            };
-            payment.PaymentDetails = JsonConvert.SerializeObject(payment.PaymentDetails);
-            // Handle different payment methods
-            switch (request.Method)
-            {
-                case PaymentMethod.COD:
-                    // For COD, we can mark as pending until delivery
-                    payment.Status = PaymentStatus.Pending;
-                    break;
+                // Validate order exists
+                var order = await _context.Orders
+                    .Include(o => o.Payment)
+                    .FirstOrDefaultAsync(o => o.Id == request.OrderId);
 
-                case PaymentMethod.VNPay:
-                    // For VNPAY, we'll create a payment URL
-                    // The actual status will be updated via callback
-                    payment.Status = PaymentStatus.Pending;
-                    break;
+                if (order == null)
+                    throw new ArgumentException("Order not found");
 
-                default:
-                    throw new ArgumentException("Unsupported payment method");
-            }
+                if (order.Payment != null)
+                    throw new InvalidOperationException("Order already has a payment");
 
-            _context.Payments.Add(payment);
-            await _context.SaveChangesAsync();
-
-            // Generate payment URL if needed (for VNPAY)
-            string paymentUrl = null;
-            if (request.Method == PaymentMethod.VNPay)
-            {
-                var vnpayRequest = new PaymentRequest
+                var payment = new Payment
                 {
-                    PaymentId = payment.Id,
+                    OrderId = request.OrderId,
+                    Method = request.Method,
+                    Status = PaymentStatus.Pending,
                     Amount = request.Amount,
-                    Description = request.Description,
-                    IpAddress = ipAddress,
-                    BankCode = BankCode.ANY,
-                    CreatedDate = DateTime.Now,
-                    Currency = Currency.VND,
-                    Language = DisplayLanguage.Vietnamese
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    TransactionId = null
                 };
 
-                paymentUrl = _vnpayService.GetPaymentUrl(vnpayRequest);
-            }
+                // Set initial payment details
+                var initialDetails = new
+                {
+                    Description = request.Description,
+                    CreatedAt = payment.CreatedAt,
+                    Method = payment.Method.ToString(),
+                    InitialStatus = "Pending",
+                    IpAddress = ipAddress
+                };
+                payment.PaymentDetails = JsonConvert.SerializeObject(initialDetails);
 
-            return new PaymentResponse
+                // Save payment to database first
+                _context.Payments.Add(payment);
+                await _context.SaveChangesAsync();
+
+                // Generate payment URL if needed (for VNPAY)
+                string paymentUrl = null;
+                if (request.Method == PaymentMethod.VNPay)
+                {
+                    var vnpayRequest = new PaymentRequest
+                    {
+                        PaymentId = payment.Id,
+                        Amount = request.Amount,
+                        Description = request.Description,
+                        IpAddress = ipAddress,
+                        BankCode = BankCode.ANY,
+                        CreatedDate = DateTime.Now,
+                        Currency = Currency.VND,
+                        Language = DisplayLanguage.Vietnamese
+                    };
+
+                    paymentUrl = _vnpayService.GetPaymentUrl(vnpayRequest);
+
+                    if (string.IsNullOrEmpty(paymentUrl))
+                    {
+                        throw new InvalidOperationException("Failed to generate VNPay payment URL");
+                    }
+                }
+
+                // Commit transaction only if everything succeeded
+                await transaction.CommitAsync();
+
+                return new PaymentResponse
+                {
+                    PaymentId = payment.Id,
+                    OrderId = payment.OrderId,
+                    Method = payment.Method,
+                    Status = payment.Status,
+                    Amount = payment.Amount,
+                    PaymentUrl = paymentUrl,
+                    TransactionId = payment.TransactionId,
+                    CreatedAt = payment.CreatedAt
+                };
+            }
+            catch (Exception)
             {
-                PaymentId = payment.Id,
-                OrderId = payment.OrderId,
-                Method = payment.Method,
-                Status = payment.Status,
-                Amount = payment.Amount,
-                PaymentUrl = paymentUrl,
-                CreatedAt = payment.CreatedAt
-            };
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<PaymentResponse> ProcessVnpayCallbackAsync(VnpayCallbackRequest request)
