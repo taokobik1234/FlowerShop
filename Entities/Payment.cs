@@ -19,7 +19,7 @@ namespace BackEnd_FLOWER_SHOP.Entities
 
         public decimal Amount { get; set; }
 
-        public long TransactionId { get; set; } // For gateway payments
+        public long? TransactionId { get; set; } // For gateway payments
 
         public string PaymentDetails { get; set; } // JSON or additional payment info
 

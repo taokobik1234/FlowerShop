@@ -24,7 +24,7 @@ namespace BackEnd_FLOWER_SHOP.Services
             _vnpayService = vnpayService;
         }
 
-        public async Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request)
+        public async Task<PaymentResponse> CreatePaymentAsync(CreatePaymentRequest request, string ipAddress)
         {
             // Validate order exists
             var order = await _context.Orders
@@ -77,8 +77,8 @@ namespace BackEnd_FLOWER_SHOP.Services
                 {
                     PaymentId = payment.Id,
                     Amount = request.Amount,
-                    Description = $"Payment for order #{order.Id}",
-                    IpAddress = request.IpAddress,
+                    Description = request.Description,
+                    IpAddress = ipAddress,
                     BankCode = BankCode.ANY,
                     CreatedDate = DateTime.Now,
                     Currency = Currency.VND,

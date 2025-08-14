@@ -14,7 +14,7 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.Payment
         public PaymentStatus Status { get; set; }
         public decimal Amount { get; set; }
         public string PaymentUrl { get; set; }
-        public long TransactionId { get; set; }
+        public long? TransactionId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }

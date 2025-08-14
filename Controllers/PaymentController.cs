@@ -31,15 +31,23 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         /// Create a new payment for an order
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<PaymentResponse>> CreatePayment([FromBody] PaymentRequest request)
+        public async Task<ActionResult<PaymentResponse>> CreatePayment([FromBody] CreatePaymentRequest request)
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Invalid input data",
+                        Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()
+                    });
+                }
                 // Get user IP address for online payments
-                request.IpAddress = NetworkHelper.GetIpAddress(HttpContext);
+                var ipAddress = NetworkHelper.GetIpAddress(HttpContext);
 
-                var payment = await _paymentService.CreatePaymentAsync(request);
-
+                var payment = await _paymentService.CreatePaymentAsync(request, ipAddress);
                 if (payment.Method == PaymentMethod.VNPay && !string.IsNullOrEmpty(payment.PaymentUrl))
                 {
                     return Ok(new ApiResponse<PaymentResponse>

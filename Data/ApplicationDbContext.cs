@@ -361,8 +361,8 @@ namespace BackEnd_FLOWER_SHOP.Data
               .OnDelete(DeleteBehavior.Cascade);
 
                         // Indexes
-                        entity.HasIndex(p => p.TransactionId)
-              .IsUnique();
+                        entity.Property(p => p.TransactionId)
+        .IsRequired(false);
                   });
 
                   // OrderItem Configuration
