@@ -81,10 +81,12 @@ namespace BackEnd_FLOWER_SHOP.Controllers
 
                     if (result.Status == PaymentStatus.Completed)
                     {
-                        return Ok(result);
+                        return Redirect($"http://localhost:5173/payment/success?paymentId={result.PaymentId}");
                     }
-
-                    return BadRequest(result);
+                    else
+                    {
+                        return Redirect("http://localhost:5173/payment/failed");
+                    }
                 }
                 catch (Exception ex)
                 {
