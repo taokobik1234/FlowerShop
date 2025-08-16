@@ -4,6 +4,8 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BackEnd_FLOWER_SHOP.Data;
+using BackEnd_FLOWER_SHOP.DTOs.Request.User;
+using BackEnd_FLOWER_SHOP.DTOs.Response.User;
 using BackEnd_FLOWER_SHOP.Entities;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -19,13 +21,15 @@ namespace BackEnd_FLOWER_SHOP.Services
         private readonly ApplicationDbContext _dbContext;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly ILogger<UserService> _logger;
 
         public UserService(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
             ApplicationDbContext dbContext,
             IHttpContextAccessor httpContextAccessor,
-            RoleManager<ApplicationRole> roleManager
+            RoleManager<ApplicationRole> roleManager,
+            ILogger<UserService> logger
         )
         {
             _signInManager = signInManager;
@@ -33,6 +37,7 @@ namespace BackEnd_FLOWER_SHOP.Services
             _dbContext = dbContext;
             _httpContextAccessor = httpContextAccessor;
             _roleManager = roleManager;
+            _logger = logger;
         }
 
         public string GetCurrentUserId()
@@ -163,6 +168,115 @@ namespace BackEnd_FLOWER_SHOP.Services
             }
 
             return IdentityResult.Success;
+        }
+
+        public async Task<UserInfoResponseDto> GetUserInfoByIdAsync(long userId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null)
+                {
+                    return null;
+                }
+
+                var role = await GetRoleAsync(user);
+
+                return new UserInfoResponseDto
+                {
+                    Id = user.Id,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    UserName = user.UserName,
+                    PhoneNumber = user.PhoneNumber,
+                    LoyaltyPoints = user.LoyaltyPoints,
+                    Role = role,
+                    EmailConfirmedAt = user.EmailConfirmed ? DateTime.UtcNow : null, // You might want to track this separately
+                    CreatedAt = DateTime.UtcNow, // You might want to add this to ApplicationUser entity
+                    UpdatedAt = DateTime.UtcNow  // You might want to add this to ApplicationUser entity
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error retrieving user info for user ID: {userId}");
+                throw;
+            }
+        }
+
+        public async Task<UserInfoResponseDto> UpdateUserInfoAsync(long userId, UpdateUserInfoDto updateUserDto)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null)
+                {
+                    return null;
+                }
+
+                // Update user properties
+                user.FirstName = updateUserDto.FirstName;
+                user.LastName = updateUserDto.LastName;
+                user.PhoneNumber = updateUserDto.PhoneNumber;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    throw new ArgumentException($"Failed to update user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
+
+                _logger.LogInformation($"User info updated successfully for user ID: {userId}");
+                return await GetUserInfoByIdAsync(userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating user info for user ID: {userId}");
+                throw;
+            }
+        }
+
+        public async Task<decimal> GetUserLoyaltyPointsAsync(long userId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                return user?.LoyaltyPoints ?? 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error retrieving loyalty points for user ID: {userId}");
+                throw;
+            }
+        }
+
+        public async Task<IdentityResult> ChangePasswordAsync(long userId, ChangePasswordDto changePasswordDto)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                if (user == null)
+                {
+                    return IdentityResult.Failed(new IdentityError { Description = "User not found" });
+                }
+
+                var result = await _userManager.ChangePasswordAsync(user, changePasswordDto.CurrentPassword, changePasswordDto.NewPassword);
+
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation($"Password changed successfully for user ID: {userId}");
+                }
+                else
+                {
+                    _logger.LogWarning($"Password change failed for user ID: {userId}");
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error changing password for user ID: {userId}");
+                throw;
+            }
         }
     }
 }
