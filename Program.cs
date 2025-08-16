@@ -1,7 +1,7 @@
 using System.Text;
 using BackEnd_FLOWER_SHOP.Configuration;
 using BackEnd_FLOWER_SHOP.Data;
-using BackEnd_FLOWER_SHOP.Entities; 
+using BackEnd_FLOWER_SHOP.Entities;
 using BackEnd_FLOWER_SHOP.Services;
 using BackEnd_FLOWER_SHOP.Services.Interfaces;
 using BackEnd_FLOWER_SHOP.Services.Order;
@@ -128,6 +128,10 @@ builder.Services.AddScoped<ILoyaltyService, LoyaltyService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+
+// After building the app, add:
+app.Urls.Add($"http://*:{port}");
 app.Urls.Add("https://localhost:5001");
 app.Urls.Add("http://localhost:5000");
 
