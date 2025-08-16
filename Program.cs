@@ -74,6 +74,13 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Configure Kestrel to only use HTTP
+builder.WebHost.ConfigureKestrel(options =>
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+    options.ListenAnyIP(int.Parse(port));
+});
+
 // Configure ASP.NET Core Identity
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {
@@ -231,7 +238,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     });
 }
 app.UseCors("AllowAll");
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseAuthentication(); // Required for Identity
 app.UseAuthorization(); // Required for Identity
 app.MapControllers(); // Map controller routes
