@@ -247,8 +247,8 @@ namespace BackEnd_FLOWER_SHOP.Controllers
                 if (request.Page < 1)
                     request.Page = 1;
 
-                if (request.PageSize < 1 || request.PageSize > 100)
-                    request.PageSize = 10;
+                if (request.PageSize < 1 || request.PageSize > 2000)
+                    request.PageSize = 1000;
 
                 // Validate price range
                 if (request.MinPrice.HasValue && request.MaxPrice.HasValue && request.MinPrice > request.MaxPrice)

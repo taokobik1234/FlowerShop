@@ -9,7 +9,7 @@ namespace BackEnd_FLOWER_SHOP.DTOs.Response.Product
     public class ProductListingRequestDto
     {
         public int Page { get; set; } = 1;
-        public int PageSize { get; set; } = 10;
+        public int PageSize { get; set; } = 1000;
 
         // Filtering
         public List<FlowerStatus>? FlowerStatuses { get; set; }
