@@ -81,11 +81,11 @@ namespace BackEnd_FLOWER_SHOP.Controllers
 
                     if (result.Status == PaymentStatus.Completed)
                     {
-                        return Redirect($"http://localhost:5173/payment/success?paymentId={result.PaymentId}");
+                        return Redirect($"https://flowershop-fe.vercel.app/payment/success?paymentId={result.PaymentId}");
                     }
                     else
                     {
-                        return Redirect("http://localhost:5173/payment/failed");
+                        return Redirect("https://flowershop-fe.vercel.app/payment/failed");
                     }
                 }
                 catch (Exception ex)
