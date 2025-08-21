@@ -10,5 +10,7 @@ namespace BackEnd_FLOWER_SHOP.Services.Interfaces
     {
         Task<SalesSummaryReportDto> GetSalesSummaryReportAsync(DateTime? startDate, DateTime? endDate);
         Task<IEnumerable<BestSellingProductReportDto>> GetBestSellingProductsReportAsync(int topN, DateTime? startDate, DateTime? endDate);
+    Task<IEnumerable<FlowerShop.DTOs.Response.SalesReportItemDto>> GetSalesMonthReportAsync(int month, int year);
+    Task<IEnumerable<FlowerShop.DTOs.Response.SalesReportItemDto>> GetSalesYearReportAsync(int year);
     }
 }

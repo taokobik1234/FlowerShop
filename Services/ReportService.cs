@@ -89,5 +89,58 @@ namespace BackEnd_FLOWER_SHOP.Services
 
             return bestSellingProducts;
         }
+
+        public async Task<IEnumerable<FlowerShop.DTOs.Response.SalesReportItemDto>> GetSalesMonthReportAsync(int month, int year)
+        {
+            var startDate = new DateTime(year, month, 1);
+            var endDate = startDate.AddMonths(1).AddDays(-1);
+            var orders = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Where(o => o.OrderStatus == ShippingStatus.Delivered && o.CreatedAt.Year == year && o.CreatedAt.Month == month)
+                .ToListAsync();
+
+            var daysInMonth = DateTime.DaysInMonth(year, month);
+            var report = new List<FlowerShop.DTOs.Response.SalesReportItemDto>();
+            for (int day = 1; day <= daysInMonth; day++)
+            {
+                var dayOrders = orders.Where(o => o.CreatedAt.Day == day).ToList();
+                var totalOrders = dayOrders.Count;
+                var totalRevenue = dayOrders.Sum(o => o.OrderItems.Sum(oi => oi.Price * oi.Quantity));
+                var averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0m;
+                report.Add(new FlowerShop.DTOs.Response.SalesReportItemDto
+                {
+                    Period = day,
+                    TotalOrders = totalOrders,
+                    TotalRevenue = totalRevenue,
+                    AverageOrderValue = averageOrderValue
+                });
+            }
+            return report;
+        }
+
+        public async Task<IEnumerable<FlowerShop.DTOs.Response.SalesReportItemDto>> GetSalesYearReportAsync(int year)
+        {
+            var orders = await _context.Orders
+                .Include(o => o.OrderItems)
+                .Where(o => o.OrderStatus == ShippingStatus.Delivered && o.CreatedAt.Year == year)
+                .ToListAsync();
+
+            var report = new List<FlowerShop.DTOs.Response.SalesReportItemDto>();
+            for (int month = 1; month <= 12; month++)
+            {
+                var monthOrders = orders.Where(o => o.CreatedAt.Month == month).ToList();
+                var totalOrders = monthOrders.Count;
+                var totalRevenue = monthOrders.Sum(o => o.OrderItems.Sum(oi => oi.Price * oi.Quantity));
+                var averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0m;
+                report.Add(new FlowerShop.DTOs.Response.SalesReportItemDto
+                {
+                    Period = month,
+                    TotalOrders = totalOrders,
+                    TotalRevenue = totalRevenue,
+                    AverageOrderValue = averageOrderValue
+                });
+            }
+            return report;
+        }
     }
 }

@@ -9,7 +9,7 @@ namespace BackEnd_FLOWER_SHOP.Controllers
 {
     [ApiController]
     [Route("api/admin/reports")]
-    [Authorize(Roles = "Admin")] // Restrict access to users with the "Admin" role
+    // [Authorize(Roles = "Admin")] // Restrict access to users with the "Admin" role
     public class AdminReportsController : ControllerBase
     {
         private readonly IReportService _reportService;
@@ -43,6 +43,31 @@ namespace BackEnd_FLOWER_SHOP.Controllers
         public async Task<IActionResult> GetBestSellingProducts([FromQuery] int topN = 10, [FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
         {
             var report = await _reportService.GetBestSellingProductsReportAsync(topN, startDate, endDate);
+            return Ok(report);
+        }
+
+        /// <summary>
+        /// Gets sales report for each day in a month.
+        /// </summary>
+        /// <param name="month">Month (1-12)</param>
+        /// <param name="year">Year</param>
+        /// <returns>Array of sales report per day</returns>
+        [HttpGet("sales-month")]
+        public async Task<IActionResult> GetSalesMonth([FromQuery] int month, [FromQuery] int year)
+        {
+            var report = await _reportService.GetSalesMonthReportAsync(month, year);
+            return Ok(report);
+        }
+
+        /// <summary>
+        /// Gets sales report for each month in a year.
+        /// </summary>
+        /// <param name="year">Year</param>
+        /// <returns>Array of sales report per month</returns>
+        [HttpGet("sales-year")]
+        public async Task<IActionResult> GetSalesYear([FromQuery] int year)
+        {
+            var report = await _reportService.GetSalesYearReportAsync(year);
             return Ok(report);
         }
     }
