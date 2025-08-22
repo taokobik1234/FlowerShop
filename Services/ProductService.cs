@@ -393,7 +393,9 @@ namespace BackEnd_FLOWER_SHOP.Services
             {
                 var product = await _context.Products
                     .Include(p => p.ImageUploads)
-                    .Include(p => p.ProductCategories) // Added to load ProductCategories
+                    .Include(p => p.ProductCategories)
+                    .Include(p => p.ProductPricingRules)
+                    .Include(p => p.Reviews)
                     .FirstOrDefaultAsync(p => p.Id == id);
 
                 if (product == null)
@@ -406,6 +408,73 @@ namespace BackEnd_FLOWER_SHOP.Services
                     };
                 }
 
+                // Check if product is referenced in any completed orders
+                var hasCompletedOrders = await _context.OrderItems
+                    .Include(oi => oi.Order)
+                    .AnyAsync(oi => oi.ProductId == id &&
+                             (oi.Order.OrderStatus == ShippingStatus.Delivered ||
+                              oi.Order.OrderStatus == ShippingStatus.Shipped));
+
+                if (hasCompletedOrders)
+                {
+                    return new ApiResponse
+                    {
+                        Success = false,
+                        Message = "Cannot delete product that has been part of completed orders. Consider marking it as inactive instead.",
+                        Errors = new List<string> { "Product referenced in completed orders" }
+                    };
+                }
+
+                // Remove cart items that reference this product
+                var cartItems = await _context.CartItem
+                    .Where(ci => ci.ProductId == id)
+                    .ToListAsync();
+
+                if (cartItems.Any())
+                {
+                    _context.CartItem.RemoveRange(cartItems);
+                    _logger.LogInformation($"Removed {cartItems.Count} cart items for product {id}");
+                }
+
+                // Remove order items for pending/cancelled orders only
+                var pendingOrderItems = await _context.OrderItems
+                    .Include(oi => oi.Order)
+                    .Where(oi => oi.ProductId == id &&
+                           (oi.Order.OrderStatus == ShippingStatus.Pending ||
+                            oi.Order.OrderStatus == ShippingStatus.Cancelled))
+                    .ToListAsync();
+
+                if (pendingOrderItems.Any())
+                {
+                    _context.OrderItems.RemoveRange(pendingOrderItems);
+                    _logger.LogInformation($"Removed {pendingOrderItems.Count} pending order items for product {id}");
+                }
+
+                // Remove user product views
+                var userViews = await _context.UserProductViews
+                    .Where(upv => upv.ProductId == id)
+                    .ToListAsync();
+
+                if (userViews.Any())
+                {
+                    _context.UserProductViews.RemoveRange(userViews);
+                    _logger.LogInformation($"Removed {userViews.Count} user product views for product {id}");
+                }
+
+                // Remove reviews
+                if (product.Reviews != null && product.Reviews.Any())
+                {
+                    _context.Reviews.RemoveRange(product.Reviews);
+                    _logger.LogInformation($"Removed {product.Reviews.Count} reviews for product {id}");
+                }
+
+                // Remove product pricing rules
+                if (product.ProductPricingRules != null && product.ProductPricingRules.Any())
+                {
+                    _context.ProductPricingRules.RemoveRange(product.ProductPricingRules);
+                    _logger.LogInformation($"Removed {product.ProductPricingRules.Count} pricing rules for product {id}");
+                }
+
                 // Delete images from Cloudinary
                 if (product.ImageUploads != null && product.ImageUploads.Any())
                 {
@@ -414,15 +483,17 @@ namespace BackEnd_FLOWER_SHOP.Services
                         await _cloudinaryService.DeleteImageAsync(image.PublicId);
                     }
                     _context.ImageUploads.RemoveRange(product.ImageUploads);
+                    _logger.LogInformation($"Removed {product.ImageUploads.Count} images for product {id}");
                 }
 
                 // Delete product categories
                 if (product.ProductCategories != null && product.ProductCategories.Any())
                 {
                     _context.ProductCategories.RemoveRange(product.ProductCategories);
+                    _logger.LogInformation($"Removed {product.ProductCategories.Count} category associations for product {id}");
                 }
 
-                // Delete the product
+                // Finally, delete the product
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -446,7 +517,6 @@ namespace BackEnd_FLOWER_SHOP.Services
                 };
             }
         }
-
         public async Task<bool> ExistProductAsync(long id)
         {
             return await _context.Products
